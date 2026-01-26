@@ -1,0 +1,154 @@
+version: "6.0.0"
+project_name: "Perth"
+project_level: 2
+current_sprint: 1
+sprint_plan_path: "docs/sprint-plan-perth-2026-01-22.md"
+
+sprints:
+  - sprint_number: 1
+    start_date: "2026-01-22"
+    end_date: null
+    capacity_points: 24
+    committed_points: 24
+    completed_points: 0
+    status: "in_progress"
+    goal: "Establish foundational systems for persistence, CLI control, notifications, and animations"
+    stories:
+      - story_id: "STORY-INF-001"
+        title: "Database Schema Setup"
+        points: 3
+        status: "completed"
+        assigned_to: "Claude Sonnet 4.5"
+      - story_id: "STORY-001"
+        title: "Persistence Manager"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-002"
+        title: "ZDrive Controller"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-003"
+        title: "Notification Bus"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-004"
+        title: "Animation Engine"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 2
+    start_date: null
+    end_date: null
+    capacity_points: 16
+    committed_points: 16
+    completed_points: 0
+    status: "not_started"
+    goal: "Build clean abstraction for external CLI tool integration with error isolation"
+    stories:
+      - story_id: "STORY-005"
+        title: "Integration Adapter Framework"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-006"
+        title: "Bloodbank Adapter"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-007"
+        title: "iMi & Jelmore Adapters"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 3
+    start_date: null
+    end_date: null
+    capacity_points: 10
+    committed_points: 10
+    completed_points: 0
+    status: "not_started"
+    goal: "Enable predefined layout templates for reproducible workspace configurations"
+    stories:
+      - story_id: "STORY-008"
+        title: "Template Registry"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-009"
+        title: "Template Instantiation Logic"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 4
+    start_date: null
+    end_date: null
+    capacity_points: 21
+    committed_points: 21
+    completed_points: 0
+    status: "not_started"
+    goal: "Implement the 3-pane Dashboard interface with Bloodbank, iMi, and ZDrive browsers"
+    stories:
+      - story_id: "STORY-010"
+        title: "Bloodbank Event Feed Pane"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-011"
+        title: "iMi Project Browser Pane"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-012"
+        title: "ZDrive Session Browser Pane"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-013"
+        title: "Dashboard Layout Integration"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 5
+    start_date: null
+    end_date: null
+    capacity_points: 11
+    committed_points: 11
+    completed_points: 0
+    status: "not_started"
+    goal: "Validate Milestone 1 acceptance criteria and ensure NFRs are met"
+    stories:
+      - story_id: "STORY-014"
+        title: "Milestone 1 End-to-End Integration"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-015"
+        title: "Performance Validation"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-016"
+        title: "Error Isolation & Reliability Tests"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+
+velocity:
+  sprint_1: null
+  sprint_2: null
+  sprint_3: null
+  sprint_4: null
+  sprint_5: null
+  rolling_average: null
+
+team:
+  size: 1
+  sprint_length_weeks: null
+  capacity_per_sprint: null
