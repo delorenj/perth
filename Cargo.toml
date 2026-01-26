@@ -1,15 +1,14 @@
 [package]
-name = "zellij"
+name = "perth"
+version = "0.44.0"
 authors = ["Aram Drevekenin <aram@poor.dev>"]
+edition = "2021"
 description = "A terminal workspace with batteries included"
-homepage = "https://zellij.dev"
-include = ["src/**/*", "assets/layouts/*", "assets/config/*", "LICENSE.md", "README.md", "!**/*_test.*", "!**/tests/**/*"]
-# See 'workspace.package' for concrete values
-license.workspace = true
-repository.workspace = true
-edition.workspace = true
-version.workspace = true
-rust-version.workspace = true
+license = "MIT"
+homepage = "https://perth.dev"
+repository = "https://github.com/33god/perth"
+readme = "README.md"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -105,6 +104,7 @@ unicode-width = { version = "0.1.8", default-features = false }
 url = { version = "2.2.2", default-features = false, features = ["serde"] }
 uuid = { version = "1.4.1", default-features = false, features = ["serde", "v4", "std"] }
 vte = { version = "0.11.0", default-features = false }
+sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio-rustls", "postgres", "macros", "migrate", "uuid", "chrono", "json"] }
 names = { version = "0.14.0", default-features = false }
 include_dir = { version = "0.7.3", default-features = false }
 sha2 = { version = "0.10", default-features = false }
