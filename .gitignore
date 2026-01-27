@@ -1,4 +1,6 @@
 target/
+.plane.env
+.gemini
 *.new
 .vscode
 .vim

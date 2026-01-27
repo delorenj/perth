@@ -1,0 +1,85 @@
+# BMAD Method Sprint Status
+# Generated: 2026-01-22
+# Project: Perth
+
+project_name: "Perth"
+sprint_number: 1
+sprint_goal: "Establish Core ZDrive Control and Persistence Infrastructure"
+sprint_start_date: "2026-01-22"
+sprint_end_date: "2026-02-05"
+last_updated: "2026-01-22"
+
+# Epic and Story Tracking
+epics:
+  - id: "PERTH-2"
+    name: "Core Control Integration"
+    description: "Port and integrate zdrive logic directly into zellij-server and zellij-client"
+    status: "in-progress"
+    stories:
+      - id: "PERTH-4"
+        name: "Implement ZDriveController"
+        description: "Create the internal controller to expose API endpoints for workspace manipulation"
+        status: "not-started"
+        priority: "Must Have"
+        estimate: 5
+
+      - id: "PERTH-5"
+        name: "CLI Commands for Tabs/Panes"
+        description: "Implement create-tab and rename-pane CLI commands linked to ZDriveController"
+        status: "not-started"
+        priority: "Must Have"
+        estimate: 5
+
+      - id: "PERTH-6"
+        name: "Input Injection Logic"
+        description: "Implement logic to inject text into specific panes via CLI"
+        status: "not-started"
+        priority: "Must Have"
+        estimate: 3
+
+  - id: "PERTH-3"
+    name: "Database Persistence Layer"
+    description: "Design and implement PostgreSQL schema and sync logic"
+    status: "in-progress"
+    stories:
+      - id: "PERTH-7"
+        name: "DB Schema & Migrations"
+        description: "Setup sqlx and create initial migrations for sessions, tabs, and panes"
+        status: "not-started"
+        priority: "Must Have"
+        estimate: 3
+
+      - id: "PERTH-8"
+        name: "PersistenceManager Implementation"
+        description: "Implement async write-behind queue for syncing state to DB"
+        status: "not-started"
+        priority: "Must Have"
+        estimate: 8
+
+  - id: "PERTH-1"
+    name: "Native Notification System"
+    description: "Core rendering engine changes for visual notifications"
+    status: "in-progress"
+    stories:
+      - id: "PERTH-9"
+        name: "NotificationBus Logic"
+        description: "Implement server-side logic to route notification events"
+        status: "not-started"
+        priority: "Must Have"
+        estimate: 5
+
+      - id: "PERTH-10"
+        name: "Notify CLI Command"
+        description: "Implement CLI command to trigger notifications"
+        status: "not-started"
+        priority: "Must Have"
+        estimate: 3
+
+# Sprint Metrics
+metrics:
+  total_epics: 3
+  total_stories: 7
+  total_points: 32
+  stories_completed: 0
+  stories_in_progress: 0
+  stories_not_started: 7
