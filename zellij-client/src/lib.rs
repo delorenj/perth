@@ -1,5 +1,6 @@
 pub mod os_input_output;
 
+pub mod animation; // Perth STORY-004: Animation Engine
 pub mod cli_client;
 mod command_is_executing;
 mod input_handler;
