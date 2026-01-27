@@ -716,6 +716,10 @@ impl Pane for PluginPane {
         // This is here to satisfy the Pane trait
         // TODO: Add notification support for plugin panes if needed
     }
+    /// Perth STORY-003: Clear notification (no-op for PluginPane)
+    fn clear_notification(&mut self) {
+        // Plugin panes don't support notifications yet
+    }
     fn set_exclude_from_sync(&mut self, exclude_from_sync: bool) {
         self.exclude_from_sync = exclude_from_sync;
     }

@@ -670,6 +670,15 @@ impl Pane for TerminalPane {
         self.set_should_render(true);
     }
 
+    /// Perth STORY-003: Clear notification from pane
+    fn clear_notification(&mut self) {
+        if self.notification.is_some() {
+            self.notification = None;
+            self.pane_frame_color_override = None;
+            self.set_should_render(true);
+        }
+    }
+
     fn set_exclude_from_sync(&mut self, exclude_from_sync: bool) {
         self.exclude_from_sync = exclude_from_sync;
     }
