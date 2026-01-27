@@ -10,7 +10,7 @@ sprints:
     end_date: null
     capacity_points: 24
     committed_points: 24
-    completed_points: 16
+    completed_points: 21
     status: "in_progress"
     goal: "Establish foundational systems for persistence, CLI control, notifications, and animations"
     stories:
@@ -33,9 +33,9 @@ sprints:
       - story_id: "STORY-003"
         title: "Notification Bus"
         points: 5
-        status: "in_progress"
+        status: "completed"
         assigned_to: "Claude Sonnet 4.5"
-        progress_notes: "Foundation complete: Notification types defined in zellij-utils, TerminalPane extended. Remaining: NotificationBus routing, CLI integration, client rendering, focus handling. See docs/STORY-003-implementation-notes.md"
+        completion_notes: "Full notification system implemented: CLI integration (zellij notify --pane-id <ID> --style <style> --message <text>), visual rendering with colored borders and icons, automatic clearing on pane focus. Core functionality complete. Optional: unit tests for routing, integration testing."
       - story_id: "STORY-004"
         title: "Animation Engine"
         points: 3
