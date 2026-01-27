@@ -7,11 +7,11 @@ sprint_plan_path: "docs/sprint-plan-perth-2026-01-22.md"
 sprints:
   - sprint_number: 1
     start_date: "2026-01-22"
-    end_date: null
+    end_date: "2026-01-27"
     capacity_points: 24
     committed_points: 24
-    completed_points: 21
-    status: "in_progress"
+    completed_points: 24
+    status: "completed"
     goal: "Establish foundational systems for persistence, CLI control, notifications, and animations"
     stories:
       - story_id: "STORY-INF-001"
@@ -39,8 +39,9 @@ sprints:
       - story_id: "STORY-004"
         title: "Animation Engine"
         points: 3
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude Sonnet 4.5"
+        completion_notes: "AnimationEngine trait with frame-based interface, CandycaneAnimation (█▓▒░ pattern at 60fps), dirty region updates for efficient rendering, adaptive FPS degradation (60fps->30fps when CPU>80%), 11 unit tests passing. Ready for integration in STORY-012 (ZDrive Session Browser)."
 
   - sprint_number: 2
     start_date: null
@@ -143,12 +144,12 @@ sprints:
         assigned_to: null
 
 velocity:
-  sprint_1: null
+  sprint_1: 24
   sprint_2: null
   sprint_3: null
   sprint_4: null
   sprint_5: null
-  rolling_average: null
+  rolling_average: 24.0
 
 team:
   size: 1
