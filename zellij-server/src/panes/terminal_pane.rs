@@ -1228,3 +1228,7 @@ mod grid_tests;
 #[cfg(test)]
 #[path = "./unit/search_in_pane_tests.rs"]
 mod search_tests;
+
+#[cfg(test)]
+#[path = "./unit/notification_tests.rs"]
+mod notification_tests;
