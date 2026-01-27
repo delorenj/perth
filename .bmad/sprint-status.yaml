@@ -10,7 +10,7 @@ sprints:
     end_date: null
     capacity_points: 24
     committed_points: 24
-    completed_points: 0
+    completed_points: 11
     status: "in_progress"
     goal: "Establish foundational systems for persistence, CLI control, notifications, and animations"
     stories:
@@ -22,8 +22,8 @@ sprints:
       - story_id: "STORY-001"
         title: "Persistence Manager"
         points: 8
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude Sonnet 4.5"
       - story_id: "STORY-002"
         title: "ZDrive Controller"
         points: 5
