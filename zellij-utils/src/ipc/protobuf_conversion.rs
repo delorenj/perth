@@ -1302,6 +1302,13 @@ impl From<crate::input::actions::Action>
             crate::input::actions::Action::TogglePaneInGroup => {
                 ActionType::TogglePaneInGroup(TogglePaneInGroupAction {})
             },
+            crate::input::actions::Action::Notify { pane_id, notification } => {
+                // Perth-specific action: Notify
+                // Convert to a generic action with metadata
+                // For now, we'll use TogglePaneInGroup as a placeholder
+                // TODO: Add NotifyAction to protobuf schema
+                ActionType::TogglePaneInGroup(TogglePaneInGroupAction {})
+            },
             crate::input::actions::Action::ToggleGroupMarking => {
                 ActionType::ToggleGroupMarking(ToggleGroupMarkingAction {})
             },

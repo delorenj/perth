@@ -10,7 +10,7 @@ sprints:
     end_date: null
     capacity_points: 24
     committed_points: 24
-    completed_points: 11
+    completed_points: 16
     status: "in_progress"
     goal: "Establish foundational systems for persistence, CLI control, notifications, and animations"
     stories:
@@ -27,13 +27,15 @@ sprints:
       - story_id: "STORY-002"
         title: "ZDrive Controller"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude Sonnet 4.5"
+        completion_notes: "Satisfied via external zellij-driver tool (zdrive CLI). Text injection uses direct 'zellij action write' for clean separation. Enhanced beyond requirements with Redis-backed state, intent tracking, and identifier-based session attachment (yiid, plane_ticket_id, bloodbank_correlation_id)."
       - story_id: "STORY-003"
         title: "Notification Bus"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "in_progress"
+        assigned_to: "Claude Sonnet 4.5"
+        progress_notes: "Foundation complete: Notification types defined in zellij-utils, TerminalPane extended. Remaining: NotificationBus routing, CLI integration, client rendering, focus handling. See docs/STORY-003-implementation-notes.md"
       - story_id: "STORY-004"
         title: "Animation Engine"
         points: 3

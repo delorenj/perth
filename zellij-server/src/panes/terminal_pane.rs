@@ -18,6 +18,7 @@ use vte;
 use zellij_utils::data::PaneContents;
 use zellij_utils::input::command::RunCommand;
 use zellij_utils::input::mouse::{MouseEvent, MouseEventType};
+use zellij_utils::notification::Notification;
 use zellij_utils::pane_size::Offset;
 use zellij_utils::{
     data::{
@@ -143,6 +144,8 @@ pub struct TerminalPane {
     #[allow(dead_code)]
     arrow_fonts: bool,
     notification_end: Option<NotificationEnd>,
+    /// Perth visual notification (STORY-003)
+    pub notification: Option<Notification>,
 }
 
 impl Pane for TerminalPane {
@@ -990,6 +993,7 @@ impl TerminalPane {
             invoked_with,
             arrow_fonts,
             notification_end,
+            notification: None, // STORY-003: Perth notification system
         }
     }
     pub fn get_x(&self) -> usize {

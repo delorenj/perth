@@ -1136,6 +1136,18 @@ tail -f /tmp/my-live-logfile | zellij action pipe --name logs --plugin https://e
         #[clap(short, long, value_parser)]
         borderless: bool,
     },
+    /// Send notification to a pane (Perth STORY-003)
+    Notify {
+        /// The pane_id of the pane, eg. terminal_1, plugin_2 or 3 (equivalent to terminal_3)
+        #[clap(short, long, value_parser)]
+        pane_id: String,
+        /// Notification style (error, success, warning)
+        #[clap(short, long, value_parser)]
+        style: String,
+        /// Notification message
+        #[clap(short, long, value_parser)]
+        message: String,
+    },
     /// Detach from the current session
     Detach,
     /// Switch to a different session
