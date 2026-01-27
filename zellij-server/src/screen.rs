@@ -515,6 +515,8 @@ pub enum ScreenInstruction {
     RemoveWatcherClient(ClientId),
     SetFollowedClient(ClientId),
     WatcherTerminalResize(ClientId, Size),
+    /// Perth STORY-003: Send notification to a pane
+    Notify(PaneId, zellij_utils::notification::Notification),
 }
 
 impl From<&ScreenInstruction> for ScreenContext {
@@ -760,6 +762,7 @@ impl From<&ScreenInstruction> for ScreenContext {
             ScreenInstruction::RemoveWatcherClient(..) => ScreenContext::RemoveWatcherClient,
             ScreenInstruction::SetFollowedClient(..) => ScreenContext::SetFollowedClient,
             ScreenInstruction::WatcherTerminalResize(..) => ScreenContext::WatcherTerminalResize, // NEW
+            ScreenInstruction::Notify(..) => ScreenContext::Notify, // Perth STORY-003
         }
     }
 }
@@ -3258,6 +3261,23 @@ impl Screen {
                 break;
             }
         }
+    }
+    /// Perth STORY-003: Set notification on a pane
+    pub fn set_pane_notification(
+        &mut self,
+        pane_id: PaneId,
+        notification: zellij_utils::notification::Notification,
+    ) -> Result<()> {
+        let err_context = || format!("failed to set notification on pane {:?}", pane_id);
+
+        for (_tab_id, tab) in self.tabs.iter_mut() {
+            if tab.has_pane_with_pid(&pane_id) {
+                tab.set_pane_notification(&pane_id, notification)
+                    .with_context(err_context)?;
+                break;
+            }
+        }
+        Ok(())
     }
     pub fn handle_mouse_event(&mut self, event: MouseEvent, client_id: ClientId) {
         match self
@@ -6698,6 +6718,11 @@ pub(crate) fn screen_thread_main(
             ScreenInstruction::WatcherTerminalResize(client_id, size) => {
                 // NEW
                 screen.set_watcher_size(client_id, size);
+                screen.render(None)?;
+            },
+            ScreenInstruction::Notify(pane_id, notification) => {
+                // Perth STORY-003: Apply notification to pane
+                screen.set_pane_notification(pane_id, notification)?;
                 screen.render(None)?;
             },
         }

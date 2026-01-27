@@ -503,6 +503,8 @@ pub trait Pane {
     fn load_pane_name(&mut self);
     fn set_borderless(&mut self, borderless: bool);
     fn borderless(&self) -> bool;
+    /// Perth STORY-003: Set notification on pane
+    fn set_notification(&mut self, notification: zellij_utils::notification::Notification);
     fn set_exclude_from_sync(&mut self, exclude_from_sync: bool);
     fn exclude_from_sync(&self) -> bool;
 
@@ -5894,6 +5896,35 @@ impl Tab {
         }
 
         log::error!("Pane with id {:?} not found", pane_id);
+        Ok(())
+    }
+    /// Perth STORY-003: Set notification on a pane
+    pub fn set_pane_notification(
+        &mut self,
+        pane_id: &PaneId,
+        notification: zellij_utils::notification::Notification,
+    ) -> Result<()> {
+        // Try floating panes first
+        if let Some(pane) = self.floating_panes.get_pane_mut(*pane_id) {
+            pane.set_notification(notification);
+            self.set_force_render();
+            return Ok(());
+        }
+
+        // Try tiled panes
+        if let Some(pane) = self.tiled_panes.get_pane_mut(*pane_id) {
+            pane.set_notification(notification);
+            self.set_force_render();
+            return Ok(());
+        }
+
+        // Try suppressed panes
+        if let Some(pane) = self.suppressed_panes.get_mut(pane_id) {
+            pane.1.set_notification(notification);
+            return Ok(());
+        }
+
+        log::error!("Pane with id {:?} not found for notification", pane_id);
         Ok(())
     }
     pub fn get_viewport(&self) -> Viewport {
