@@ -1776,6 +1776,7 @@ impl TryFrom<Action> for ProtobufAction {
             }
             | Action::TogglePaneBorderless { pane_id: _ }
             | Action::SetPaneBorderless { .. }
+            | Action::Notify { .. }
             | Action::SkipConfirm { action: _ }
             | Action::SwitchSession { .. } => Err("Unsupported action"),
         }

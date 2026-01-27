@@ -459,6 +459,11 @@ pub enum Action {
         pane_id: PaneId,
         borderless: bool,
     },
+    /// Send notification to a pane (Perth STORY-003)
+    Notify {
+        pane_id: PaneId,
+        notification: crate::notification::Notification,
+    },
     TogglePaneInGroup,
     ToggleGroupMarking,
 }
@@ -1280,6 +1285,37 @@ impl Action {
                         Ok(vec![Action::SetPaneBorderless {
                             pane_id: parsed_pane_id,
                             borderless,
+                        }])
+                    },
+                    Err(_e) => {
+                        Err(format!(
+                            "Malformed pane id: {}, expecting either a bare integer (eg. 1), a terminal pane id (eg. terminal_1) or a plugin pane id (eg. plugin_1)",
+                            pane_id
+                        ))
+                    }
+                }
+            },
+            CliAction::Notify {
+                pane_id,
+                style,
+                message,
+            } => {
+                use crate::notification::{Notification, NotificationStyle};
+
+                let parsed_pane_id = PaneId::from_str(&pane_id);
+                match parsed_pane_id {
+                    Ok(parsed_pane_id) => {
+                        let notification_style = NotificationStyle::from_str(&style)
+                            .ok_or_else(|| format!(
+                                "Invalid notification style: {}. Expected one of: error, success, warning",
+                                style
+                            ))?;
+
+                        let notification = Notification::new(notification_style, message);
+
+                        Ok(vec![Action::Notify {
+                            pane_id: parsed_pane_id,
+                            notification,
                         }])
                     },
                     Err(_e) => {

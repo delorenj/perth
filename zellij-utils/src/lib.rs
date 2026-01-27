@@ -7,6 +7,7 @@ pub mod errors;
 pub mod home;
 pub mod input;
 pub mod kdl;
+pub mod notification;
 pub mod pane_size;
 pub mod plugin_api;
 pub mod position;
