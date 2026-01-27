@@ -1243,4 +1243,10 @@ impl Pane for MockPane {
     ) -> PaneContents {
         unimplemented!()
     }
+    fn set_notification(&mut self, _notification: zellij_utils::notification::Notification) {
+        // MockPane stub - notifications not needed for tests
+    }
+    fn clear_notification(&mut self) {
+        // MockPane stub - notifications not needed for tests
+    }
 }
