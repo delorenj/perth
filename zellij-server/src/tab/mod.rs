@@ -505,6 +505,8 @@ pub trait Pane {
     fn borderless(&self) -> bool;
     /// Perth STORY-003: Set notification on pane
     fn set_notification(&mut self, notification: zellij_utils::notification::Notification);
+    /// Perth STORY-003: Clear notification from pane
+    fn clear_notification(&mut self);
     fn set_exclude_from_sync(&mut self, exclude_from_sync: bool);
     fn exclude_from_sync(&self) -> bool;
 
@@ -5297,7 +5299,11 @@ impl Tab {
                     },
                     None => Ok(()),
                 }
-            })
+            })?;
+
+        // Perth STORY-003: Clear notification when pane is focused
+        self.clear_pane_notification(&pane_id)?;
+        Ok(())
     }
     pub fn focus_suppressed_pane_for_all_clients(&mut self, pane_id: PaneId) {
         match self.suppressed_panes.remove(&pane_id) {
@@ -5925,6 +5931,31 @@ impl Tab {
         }
 
         log::error!("Pane with id {:?} not found for notification", pane_id);
+        Ok(())
+    }
+    /// Perth STORY-003: Clear notification from a pane
+    pub fn clear_pane_notification(&mut self, pane_id: &PaneId) -> Result<()> {
+        // Try floating panes first
+        if let Some(pane) = self.floating_panes.get_pane_mut(*pane_id) {
+            pane.clear_notification();
+            self.set_force_render();
+            return Ok(());
+        }
+
+        // Try tiled panes
+        if let Some(pane) = self.tiled_panes.get_pane_mut(*pane_id) {
+            pane.clear_notification();
+            self.set_force_render();
+            return Ok(());
+        }
+
+        // Try suppressed panes
+        if let Some(pane) = self.suppressed_panes.get_mut(pane_id) {
+            pane.1.clear_notification();
+            return Ok(());
+        }
+
+        // Pane not found - this is not an error (pane might have been closed)
         Ok(())
     }
     pub fn get_viewport(&self) -> Viewport {
