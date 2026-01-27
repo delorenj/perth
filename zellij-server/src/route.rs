@@ -1574,6 +1574,20 @@ pub(crate) fn route_action(
                 ))
                 .with_context(err_context)?;
         },
+        Action::Notify { pane_id, notification } => {
+            // Perth STORY-003: Route notification to pane
+            // Convert zellij_utils::data::PaneId to crate::panes::PaneId
+            use crate::panes::PaneId as ServerPaneId;
+            let server_pane_id: ServerPaneId = pane_id.into();
+
+            senders
+                .send_to_screen(ScreenInstruction::Notify(
+                    server_pane_id,
+                    notification,
+                ))
+                .with_context(err_context)?;
+            // Note: No NotificationEnd needed - notification applies immediately
+        },
     }
     let result = wait_for_action_completion(completion_rx, &action_name, wait_forever);
     if let Some(exit_status) = result.exit_status {

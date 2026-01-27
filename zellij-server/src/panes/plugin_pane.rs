@@ -710,6 +710,12 @@ impl Pane for PluginPane {
     fn borderless(&self) -> bool {
         self.borderless
     }
+    /// Perth STORY-003: Set notification (PluginPane doesn't support visual notifications yet)
+    fn set_notification(&mut self, _notification: zellij_utils::notification::Notification) {
+        // Plugin panes don't support notifications yet
+        // This is here to satisfy the Pane trait
+        // TODO: Add notification support for plugin panes if needed
+    }
     fn set_exclude_from_sync(&mut self, exclude_from_sync: bool) {
         self.exclude_from_sync = exclude_from_sync;
     }

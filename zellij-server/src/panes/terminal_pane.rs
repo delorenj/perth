@@ -645,6 +645,31 @@ impl Pane for TerminalPane {
         }
     }
 
+    /// Perth STORY-003: Set notification and apply styling
+    fn set_notification(&mut self, notification: zellij_utils::notification::Notification) {
+        use zellij_utils::notification::NotificationStyle;
+
+        self.notification = Some(notification.clone());
+
+        // Apply frame color override based on notification style
+        let (color, text) = match notification.style {
+            NotificationStyle::Error => (
+                self.style.colors.exit_code_error.base,
+                format!("{} {}", notification.style.icon(), notification.message)
+            ),
+            NotificationStyle::Success => (
+                self.style.colors.exit_code_success.base,
+                format!("{} {}", notification.style.icon(), notification.message)
+            ),
+            NotificationStyle::Warning => (
+                self.style.colors.frame_highlight.base,
+                format!("{} {}", notification.style.icon(), notification.message)
+            ),
+        };
+        self.pane_frame_color_override = Some((color, Some(text)));
+        self.set_should_render(true);
+    }
+
     fn set_exclude_from_sync(&mut self, exclude_from_sync: bool) {
         self.exclude_from_sync = exclude_from_sync;
     }
