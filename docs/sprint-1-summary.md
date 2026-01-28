@@ -11,61 +11,69 @@
 
 ## Stories Completed
 
-### STORY-INF-001: Database & Persistence Layer (8 points)
+> **Note:** Story IDs follow `.bmad/sprint-status.yaml` as the source of truth.
+
+### STORY-INF-001: Database Schema Setup (3 points)
 **Status:** ✅ Complete
 
 **Deliverables:**
-- PostgreSQL database schema with 5 tables (pane_states, notifications, focus_history, tab_layouts, session_snapshots)
-- Async SQLx connection pooling with write-behind caching
-- PersistenceManager trait with configurable flush intervals
-- Full migration support via `sqlx-cli`
+- PostgreSQL database schema with 5 tables (sessions, tabs, panes, pane_history, templates)
+- Indexes on sessions.name, sessions.last_active, templates.name
+- Migration support via `sqlx-cli`
 
 **Files:**
-- `zellij-server/src/persistence/`
-- `migrations/*.sql`
+- `zellij-server/migrations/*.sql`
 
 ---
 
-### STORY-001: ZDrive Controller (5 points)
+### STORY-001: Persistence Manager (8 points)
 **Status:** ✅ Complete
 
 **Deliverables:**
-- External `zdrive` CLI integration via std::process::Command
-- JSON-based state serialization
-- Redis-backed persistent state
-- Pane navigation commands (left, right, up, down, focus)
+- `PersistenceManager` struct with write-behind caching strategy
+- Async SQLx connection pooling
+- Graceful degradation if DB unavailable (NFR-003)
+- Session/tab/pane CRUD operations
+- Unit tests with sqlx::test macro
 
 **Files:**
-- `zellij-server/src/plugins/zdrive_controller.rs`
+- `zellij-server/src/persistence/manager.rs`
+- `zellij-server/src/persistence/models.rs`
+- `zellij-server/src/persistence/error.rs`
 
 ---
 
-### STORY-002: Focus Tracking (5 points)
+### STORY-002: ZDrive Controller (5 points)
 **Status:** ✅ Complete
 
+**Implementation Approach:** Satisfied via external `zellij-driver` tool (`zdrive` CLI) rather than embedded module. This provides clean separation between context management and terminal primitives.
+
 **Deliverables:**
-- Focus state persistence in PostgreSQL
-- Automatic focus restoration on session resume
-- Integration with ZDrive Controller
-- Focus history tracking with timestamps
+- External `zdrive` CLI with Redis-backed state
+- Pane-first navigation by semantic name
+- Intent tracking with typed log entries
+- Identifier-based session attachment (yiid, plane_ticket_id, bloodbank_correlation_id)
+- Text injection via `zellij action write`
 
 **Files:**
-- `zellij-server/src/persistence/focus.rs`
-- `zellij-server/src/panes/terminal_pane.rs`
+- `zellij-driver/` (external tool)
+- See: [zdrive-integration-notes.md](zdrive-integration-notes.md)
 
 ---
 
-### STORY-003: Notification Bus (3 points)
+### STORY-003: Notification Bus (5 points)
 **Status:** ✅ Complete
 
 **Deliverables:**
-- NotificationBus with pub/sub architecture
+- `NotificationBus` with pub/sub routing architecture
+- CLI integration: `zellij notify --pane-id <ID> --style <style> --message <text>`
 - 3 notification styles: Error (red), Success (green), Warning (yellow)
 - Focus-based auto-clear (notifications clear when pane receives focus)
 - Frame color override during active notifications
 - 11 comprehensive unit tests
 
 **Files:**
+- `zellij-server/src/notifications/bus.rs`
 - `zellij-server/src/panes/terminal_pane.rs` (notification field and methods)
 - `zellij-server/src/panes/unit/notification_tests.rs`
 
@@ -75,11 +83,11 @@
 **Status:** ✅ Complete
 
 **Deliverables:**
-- AnimationEngine trait with frame-based animation interface
-- DirtyRegion tracking for efficient partial rendering
-- Candycane pattern implementation (█▓▒░ gradient shifting 1 cell/frame)
-- 60fps target with adaptive degradation to 30fps under high CPU load
-- 8 comprehensive unit tests
+- `AnimationEngine` trait with frame-based animation interface
+- `DirtyRegion` tracking for efficient partial rendering
+- `CandycaneAnimation` implementation (█▓▒░ gradient shifting 1 cell/frame)
+- 60fps target with adaptive degradation to 30fps under high CPU load (>80%)
+- 11 comprehensive unit tests
 
 **Files:**
 - `zellij-client/src/animation/engine.rs`
@@ -91,9 +99,9 @@
 
 **Total Unit Tests:** 22 passing
 **Test Breakdown:**
-- Animation Engine: 8 tests
+- Animation Engine: 11 tests
 - Notification Bus: 11 tests
-- Persistence Layer: 3 tests
+- Persistence Layer: (DB integration tests)
 
 ---
 
@@ -159,11 +167,13 @@ Warning: Yellow border (#FFFF00) - Cautions
 
 ## Next Steps (Sprint 2)
 
-1. Enhanced pane management features
-2. Session snapshot/restore functionality
-3. Advanced animation patterns (pulse, fade, scroll)
-4. Performance benchmarking suite
-5. Integration with Zellij plugin system
+Per sprint plan, Sprint 2 focuses on the **Integration Layer**:
+
+1. **STORY-005:** Integration Adapter Framework (8 points) - `IntegrationAdapter` trait, `SubprocessManager`
+2. **STORY-006:** Bloodbank Adapter (5 points) - Real-time event subscription
+3. **STORY-007:** iMi & Jelmore Adapters (3 points) - Project list and session management
+
+See [sprint-plan-perth-2026-01-22.md](sprint-plan-perth-2026-01-22.md) for full details.
 
 ---
 
