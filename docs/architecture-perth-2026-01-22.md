@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-22
 **Architect:** 33GOD/Delorenj
-**Version:** 2.0
+**Version:** 2.1
 **Project Type:** Terminal IDE / Multiplexer Fork
 **Project Level:** 2
 **Status:** Draft
@@ -355,11 +355,12 @@ tabs:
 
 ### Core Components (Existing)
 
-#### 1. ZDrive Controller (`zellij-server`)
-- **Responsibility:** Handles high-level commands to manipulate the workspace (create tab, rename pane, inject input).
-- **Interface:** Exposes internal API endpoints callable via the CLI.
-- **Key Logic:** Translates "user intent" (e.g., "focus tab X") into internal Zellij `Action`s.
+#### 1. ZDrive Controller (External Tool)
+- **Responsibility:** Handles high-level commands to manipulate the workspace (create tab, rename pane, inject input) and tracks development context.
+- **Interface:** External `zdrive` CLI that calls `zellij action` commands via subprocess.
+- **Key Logic:** Translates "user intent" into Zellij `Action`s while maintaining context in Redis.
 - **FRs Addressed:** FR-002, FR-003
+- **Implementation Note (Sprint 1):** Implemented as external `zellij-driver` tool rather than embedded module. This provides clean separation between context management (zdrive with Redis) and terminal primitives (Zellij IPC). See [zdrive-integration-notes.md](zdrive-integration-notes.md) for details.
 
 #### 2. Notification Bus (`zellij-server` & `zellij-client`)
 - **Responsibility:** Routes notification events from external triggers to the rendering engine.
@@ -1028,6 +1029,7 @@ zellij-client/src/
 |---------|------|--------|---------|
 | 1.0 | 2026-01-22 | 33GOD | Initial architecture |
 | 2.0 | 2026-01-22 | 33GOD | Extended with Dashboard, Integration Layer, Template System |
+| 2.1 | 2026-01-28 | 33GOD | Updated ZDrive Controller to reflect external tool implementation (Sprint 1 outcome) |
 
 ---
 

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
+
+### Perth (33GOD Fork)
+* docs: update PRD v1.1 - reflect Sprint 1 completion, external zdrive implementation approach, resolved open questions
+* docs: transform README into Perth identity - add 33GOD features, installation, roadmap, Sprint 1 deliverables
+* docs: align sprint-1-summary with sprint-status.yaml source of truth - fix story numbering and point allocations
+* docs: update architecture v2.1 - document external zdrive CLI decision, add zdrive-integration-notes reference
+* docs: create zdrive-integration-notes.md - document Redis-backed state, identifier-based session attachment patterns
+
+### Upstream Zellij
 * fix: meta key handling in web client (https://github.com/zellij-org/zellij/pull/4376)
 * refactor: move logical structures from client to server (https://github.com/zellij-org/zellij/pull/4383)
 * fix: make sessions compatible across versions (https://github.com/zellij-org/zellij/pull/4439)
