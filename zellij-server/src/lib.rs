@@ -5,6 +5,7 @@ pub mod tab;
 
 mod background_jobs;
 mod global_async_runtime;
+mod integrations;
 mod logging_pipe;
 mod notifications;
 mod pane_groups;
