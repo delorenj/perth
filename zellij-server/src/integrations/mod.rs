@@ -58,18 +58,19 @@
 // ```
 
 mod adapter;
+pub mod bloodbank;
 mod error;
 mod mock;
 mod subprocess;
 
 // Re-export public API
 pub use adapter::{AdapterConfig, IntegrationAdapter};
+pub use bloodbank::{BloodbankAdapter, BloodbankEvent, ParsedEvent};
 pub use error::{IntegrationError, IntegrationResult};
 pub use mock::MockAdapter;
 pub use subprocess::SubprocessManager;
 
 // Future: Specific adapter implementations will be added in separate stories
-// pub mod bloodbank;  // STORY-006
 // pub mod imi;        // STORY-007
 // pub mod jelmore;    // STORY-007
 

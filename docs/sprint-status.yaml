@@ -50,12 +50,14 @@ epics:
       - id: "STORY-006"
         name: "Bloodbank Adapter"
         description: "Real-time event subscription from Bloodbank CLI subprocess"
-        status: "not-started"
+        status: "completed"
         priority: "Must Have"
         estimate: 5
+        actual: 5
         blocked_by: ["STORY-005"]
         plane_ticket_id: "5efcc545-6301-4871-a4be-fd8534c4601f"
         plane_url: "https://plane.delo.sh/33god/projects/cbfbb641-33e2-43c6-a7d1-ce63136ab689/issues/5efcc545-6301-4871-a4be-fd8534c4601f"
+        completed_date: "2026-01-29"
 
       - id: "STORY-007"
         name: "iMi & Jelmore Adapters"
@@ -98,18 +100,18 @@ metrics:
   total_epics: 1
   total_stories: 3
   total_points: 16
-  points_completed: 8
-  stories_completed: 1
+  points_completed: 13
+  stories_completed: 2
   stories_in_progress: 0
   stories_defined: 0
-  stories_not_started: 2
+  stories_not_started: 1
 
 # Overall Project Progress
 project_progress:
   total_sprints: 5
   sprints_completed: 1
   total_points: 82
-  points_completed: 32
+  points_completed: 37
   milestone_1_status: "in-progress"
 
 # Velocity Tracking
