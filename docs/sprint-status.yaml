@@ -1,85 +1,119 @@
 # BMAD Method Sprint Status
-# Generated: 2026-01-22
+# Updated: 2026-01-29
 # Project: Perth
 
 project_name: "Perth"
-sprint_number: 1
-sprint_goal: "Establish Core ZDrive Control and Persistence Infrastructure"
-sprint_start_date: "2026-01-22"
-sprint_end_date: "2026-02-05"
-last_updated: "2026-01-22"
+sprint_number: 2
+sprint_goal: "Build Integration Layer for External CLI Tool Integration"
+sprint_start_date: "2026-01-29"
+sprint_end_date: "TBD"
+last_updated: "2026-01-29"
 
-# Epic and Story Tracking
+# Plane Integration
+plane:
+  workspace: "33god"
+  project_id: "cbfbb641-33e2-43c6-a7d1-ce63136ab689"
+  board_url: "https://plane.delo.sh/33god/projects/cbfbb641-33e2-43c6-a7d1-ce63136ab689/"
+
+# Sprint History
+completed_sprints:
+  - sprint_number: 1
+    sprint_goal: "Establish Core ZDrive Control and Persistence Infrastructure"
+    start_date: "2026-01-22"
+    end_date: "2026-01-29"
+    points_planned: 24
+    points_delivered: 24
+    stories_completed:
+      - STORY-001  # Persistence Manager
+      - STORY-003  # Notification Bus
+      - STORY-004  # Animation Engine
+
+# Current Sprint: Epic and Story Tracking
 epics:
-  - id: "PERTH-2"
-    name: "Core Control Integration"
-    description: "Port and integrate zdrive logic directly into zellij-server and zellij-client"
+  - id: "PERTH-5"
+    name: "Integration Layer"
+    description: "Build clean abstraction for external CLI tool integration with error isolation"
     status: "in-progress"
     stories:
-      - id: "PERTH-4"
-        name: "Implement ZDriveController"
-        description: "Create the internal controller to expose API endpoints for workspace manipulation"
-        status: "not-started"
-        priority: "Must Have"
-        estimate: 5
-
-      - id: "PERTH-5"
-        name: "CLI Commands for Tabs/Panes"
-        description: "Implement create-tab and rename-pane CLI commands linked to ZDriveController"
-        status: "not-started"
-        priority: "Must Have"
-        estimate: 5
-
-      - id: "PERTH-6"
-        name: "Input Injection Logic"
-        description: "Implement logic to inject text into specific panes via CLI"
-        status: "not-started"
-        priority: "Must Have"
-        estimate: 3
-
-  - id: "PERTH-3"
-    name: "Database Persistence Layer"
-    description: "Design and implement PostgreSQL schema and sync logic"
-    status: "in-progress"
-    stories:
-      - id: "PERTH-7"
-        name: "DB Schema & Migrations"
-        description: "Setup sqlx and create initial migrations for sessions, tabs, and panes"
-        status: "not-started"
-        priority: "Must Have"
-        estimate: 3
-
-      - id: "PERTH-8"
-        name: "PersistenceManager Implementation"
-        description: "Implement async write-behind queue for syncing state to DB"
-        status: "not-started"
+      - id: "STORY-005"
+        name: "Integration Adapter Framework"
+        description: "IntegrationAdapter trait, SubprocessManager, health checks, restart logic"
+        status: "completed"
         priority: "Must Have"
         estimate: 8
+        actual: 8
+        document: "docs/stories/STORY-005.md"
+        plane_ticket_id: "bf48d341-b200-4be1-9480-61c898ad40c5"
+        plane_url: "https://plane.delo.sh/33god/projects/cbfbb641-33e2-43c6-a7d1-ce63136ab689/issues/bf48d341-b200-4be1-9480-61c898ad40c5"
+        completed_date: "2026-01-29"
 
-  - id: "PERTH-1"
-    name: "Native Notification System"
-    description: "Core rendering engine changes for visual notifications"
-    status: "in-progress"
-    stories:
-      - id: "PERTH-9"
-        name: "NotificationBus Logic"
-        description: "Implement server-side logic to route notification events"
+      - id: "STORY-006"
+        name: "Bloodbank Adapter"
+        description: "Real-time event subscription from Bloodbank CLI subprocess"
         status: "not-started"
         priority: "Must Have"
         estimate: 5
+        blocked_by: ["STORY-005"]
+        plane_ticket_id: "5efcc545-6301-4871-a4be-fd8534c4601f"
+        plane_url: "https://plane.delo.sh/33god/projects/cbfbb641-33e2-43c6-a7d1-ce63136ab689/issues/5efcc545-6301-4871-a4be-fd8534c4601f"
 
-      - id: "PERTH-10"
-        name: "Notify CLI Command"
-        description: "Implement CLI command to trigger notifications"
+      - id: "STORY-007"
+        name: "iMi & Jelmore Adapters"
+        description: "Query iMi projects and trigger Jelmore sessions"
         status: "not-started"
         priority: "Must Have"
         estimate: 3
+        blocked_by: ["STORY-005"]
+        plane_ticket_id: "2c04cb10-b410-4b15-83c7-600b30e19529"
+        plane_url: "https://plane.delo.sh/33god/projects/cbfbb641-33e2-43c6-a7d1-ce63136ab689/issues/2c04cb10-b410-4b15-83c7-600b30e19529"
+
+# Upcoming Sprints (Preview)
+upcoming:
+  - sprint_number: 3
+    sprint_goal: "Template System for Reproducible Layouts"
+    stories:
+      - STORY-008  # Template Registry
+      - STORY-009  # Template Instantiation Logic
+    points: 10
+
+  - sprint_number: 4
+    sprint_goal: "Dashboard Components (Bloodbank, iMi, ZDrive panes)"
+    stories:
+      - STORY-010  # Bloodbank Event Feed Pane
+      - STORY-011  # iMi Project Browser Pane
+      - STORY-012  # ZDrive Session Browser Pane
+      - STORY-013  # Dashboard Layout Integration
+    points: 21
+
+  - sprint_number: 5
+    sprint_goal: "Milestone 1 Integration & Testing"
+    stories:
+      - STORY-014  # E2E Integration
+      - STORY-015  # Performance Validation
+      - STORY-016  # Error Isolation Tests
+    points: 11
 
 # Sprint Metrics
 metrics:
-  total_epics: 3
-  total_stories: 7
-  total_points: 32
-  stories_completed: 0
+  total_epics: 1
+  total_stories: 3
+  total_points: 16
+  points_completed: 8
+  stories_completed: 1
   stories_in_progress: 0
-  stories_not_started: 7
+  stories_defined: 0
+  stories_not_started: 2
+
+# Overall Project Progress
+project_progress:
+  total_sprints: 5
+  sprints_completed: 1
+  total_points: 82
+  points_completed: 32
+  milestone_1_status: "in-progress"
+
+# Velocity Tracking
+velocity:
+  sprint_1: 24
+  sprint_2: null  # Will be filled when sprint completes
+  rolling_average: 24
