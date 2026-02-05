@@ -1,10 +1,20 @@
 [env]
 _.file = [".plane.env", ".env"]
 
-[tasks."perth:build"]
+[tasks.build]
 description = "Build the Perth project"
-run = "uv run python .mise/tasks/perth.py build"
+run = "uv run python .mise/tasks/console.py build"
 
-[tasks."perth:start"]
+[tasks.start]
 description = "Start the Perth project"
-run = "uv run python .mise/tasks/perth.py start"
+run = "uv run python .mise/tasks/console.py start"
+
+[tasks.standup]
+description = "Align team on current status, agree on next tasks/tickets, and begin dev cycle"
+run = "uv run python .mise/tasks/console.py standup"
+depends = ["build"]
+
+[tasks."context:boostrap"]
+description = "Combine project-wide context and print it"
+run = ".mise/tasks/console.py"
+depends = ["docs:sync"]
