@@ -1,2 +1,10 @@
 [env]
-_.file = [".plane.env"]
+_.file = [".plane.env", ".env"]
+
+[tasks."perth:build"]
+description = "Build the Perth project"
+run = "uv run python .mise/tasks/perth.py build"
+
+[tasks."perth:start"]
+description = "Start the Perth project"
+run = "uv run python .mise/tasks/perth.py start"
