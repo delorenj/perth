@@ -529,7 +529,7 @@ cargo install --path .
 ### Future Milestones
 
 - **Milestone 2**: Advanced agent collaboration features
-- **Milestone 3**: Voice integration (TalkyTonny)
+- **Milestone 3**: Voice integration (HeyMa)
 - **Milestone 4**: Upstream Zellij feature sync
 
 ---
