@@ -7,3 +7,8 @@ target/
 .idea
 .DS_Store
 /assets/man/zellij.1
+
+# Environment files
+.env
+.env.local
+.env.*.local

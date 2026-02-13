@@ -125,7 +125,7 @@ Set these variables for database connectivity:
 
 ```bash
 # PostgreSQL connection
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 
 # Verify connectivity
 psql "$DATABASE_URL" -c "SELECT version();"
@@ -323,7 +323,7 @@ Create test file `/tmp/test_persistence.sh`:
 #!/bin/bash
 set -e
 
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 
 echo "=== Testing Persistence Manager Write-Behind Caching ==="
 echo
@@ -436,7 +436,7 @@ export DATABASE_URL="postgres://invalid:invalid@invalid:9999/invalid"
 
 # Test 3: Kill PostgreSQL mid-session (requires root)
 # Start Perth normally
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 /home/delorenj/code/33GOD/perth/target/release/perth --session db-kill-test &
 PERTH_PID=$!
 sleep 3
@@ -1428,7 +1428,7 @@ Next: Sprint 2 - Integration Layer (16 points)
 
 ```bash
 # Start Perth with persistence
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 /home/delorenj/code/33GOD/perth/target/release/perth --session e2e-test
 ```
 

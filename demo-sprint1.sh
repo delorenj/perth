@@ -5,7 +5,7 @@
 set -e
 
 PERTH_BIN="./target/release/perth"
-DB_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+DB_URL="postgres://user:pass@192.168.1.12:5432/perth"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "   Sprint 1: Interactive Walkthrough"

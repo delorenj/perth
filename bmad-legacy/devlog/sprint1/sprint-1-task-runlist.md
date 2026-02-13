@@ -32,7 +32,7 @@ For rapid validation, run the automated demo script:
 
 ```bash
 cd /home/delorenj/code/33GOD/perth
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 ./demo-sprint1.sh
 ```
 
@@ -59,7 +59,7 @@ export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/p
 **Commands:**
 
 ```bash
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 
 psql "$DATABASE_URL" -c "\dt" | grep -E "(sessions|tabs|panes|pane_history|templates)"
 ```
@@ -131,7 +131,7 @@ psql "$DATABASE_URL" -c "\d panes" | grep "component_state"
 
 ```bash
 # Terminal 1: Start Perth with DATABASE_URL set
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 /home/delorenj/code/33GOD/perth/target/release/perth --session runlist-test &
 PERTH_PID=$!
 echo "Perth PID: $PERTH_PID"
@@ -141,7 +141,7 @@ sleep 5
 **Verification Commands (Terminal 2):**
 
 ```bash
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 
 # Check session record exists
 SESSION_COUNT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM sessions WHERE name = 'runlist-test';")
@@ -632,7 +632,7 @@ test animation::engine::tests::test_adaptive_fps_degradation ... ok
 **Setup:**
 
 ```bash
-export DATABASE_URL="postgres://delorenj:REDACTED_CREDENTIAL@192.168.1.12:5432/perth"
+export DATABASE_URL="postgres://user:pass@192.168.1.12:5432/perth"
 /home/delorenj/code/33GOD/perth/target/release/perth --session e2e-runlist &
 PERTH_PID=$!
 sleep 5
