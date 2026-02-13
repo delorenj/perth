@@ -18,3 +18,6 @@ depends = ["build"]
 description = "Combine project-wide context and print it"
 run = ".mise/tasks/console.py"
 depends = ["docs:sync"]
+
+[tools]
+rust = "stable"
