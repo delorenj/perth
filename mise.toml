@@ -1,0 +1,5 @@
+# mise configuration for Perth
+# https://mise.jdx.dev/configuration.html
+
+[env]
+_.file = ".env"
