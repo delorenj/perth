@@ -1,1 +1,0 @@
--keep,allowobfuscation,allowshrinking class sh.delo.perth.feature.session.ui.SessionListViewModel
