@@ -1,21 +1,24 @@
 ---
 stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
+inputDocuments:
+  - '/home/delorenj/code/perth/prd.md'
+  - '/home/delorenj/code/perth/technical-perth-voice-zellij-2026-03-29.md'
+  - '/home/delorenj/code/perth/braindump.md'
+  - '/home/delorenj/code/perth/docs/bmad-workflow-plan-perth.md'
 workflowType: 'architecture'
+project_name: 'perth'
+user_name: 'Jarad'
+date: '2026-04-01'
 lastStep: 8
 status: 'complete'
-completedAt: '2026-03-29'
-inputDocuments:
-  - '/Users/delorenj/code/perth/_bmad-output/planning-artifacts/prd.md'
-  - '/Users/delorenj/code/perth/docs/research/technical-perth-voice-zellij-2026-03-29.md'
-workflowType: 'architecture'
-project_name: 'Perth'
-user_name: 'Jarad'
-date: '2026-03-29'
+completedAt: '2026-04-01'
 ---
 
 # Architecture Decision Document
 
-_This document builds collaboratively through step-by-step discovery. Sections are appended as we work through each architectural decision together._
+_Perth - Voice-driven Android client for Zellij sessions._
+
+---
 
 ## Project Context Analysis
 
@@ -23,574 +26,881 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 **Functional Requirements:**
 
-The PRD defines 15 FRs centered on five architectural capabilities: secure server connection, session browsing, tab/pane navigation, voice capture and transcription, safe command execution, settings, local persistence, reconnect handling, and clear error handling. Architecturally, this means Perth needs a client-side state model that can represent sessions, tabs, panes, the active pane, and the current voice mode, plus a transport layer for zealot and an execution layer for commands.
+Perth defines 15 functional requirements (FR1-FR15) spanning five architectural domains:
+
+1. **Server Connectivity (FR1, FR2, FR13):** Connect to a zealot server, fetch sessions, handle reconnection. This is the foundational transport layer and the biggest technical unknown.
+2. **Navigation & Display (FR3, FR4, FR5):** Represent Zellij tabs as swipeable mobile screens, maintain active pane awareness, and provide typed input fallback.
+3. **Voice Capture & Modes (FR6, FR7, FR8, FR9, FR10):** Three distinct voice modes (command, transcription, task) with shared capture infrastructure. Mode selection must be explicit.
+4. **Command Safety (FR10, FR11):** LLM-driven command interpretation with mandatory confirmation gate. No destructive commands without user approval.
+5. **Infrastructure (FR12, FR14, FR15):** Error handling, settings management, local persistence of sessions and preferences.
 
 **Non-Functional Requirements:**
 
-The major NFR drivers are performance, reliability, security, privacy, accessibility, and Android compatibility. These push the architecture toward a Compose-first layered Android app with ViewModel/state ownership, secure local storage, foreground-initiated microphone access, explicit command confirmation, and resilient reconnect behavior.
+- **Performance:** Session data loads fast on mobile. Voice-to-text with minimal delay. Smooth UI during state updates.
+- **Reliability:** Recover from transient network failures. Graceful mic permission failures. Command mode never executes without confirmation.
+- **Security:** API keys stored securely. Mic access runtime-gated. Command execution auditable.
+- **Privacy:** Audio retained only when user saves. Transcription stays local unless explicitly sent to cloud.
+- **Accessibility:** Voice controls readable on small screens. State changes visible without relying on audio.
+- **Compatibility:** Android-only MVP. Compose-first. Modern Android permission and background rules.
 
 **Scale & Complexity:**
 
-- Primary domain: Android mobile client / developer productivity tooling
-- Complexity level: High
-- Estimated architectural components: 6-8 core components
+- Primary domain: Mobile app (Android-native)
+- Complexity level: High (Level 3) - Android + Voice AI + LLM + Server Protocol
+- Estimated architectural components: 12-15 major modules
+- Estimated stories: 20-35 across 6-8 epics
 
 ### Technical Constraints & Dependencies
 
-- Android-only MVP
-- Zealot server contract is not yet confirmed
-- Voice capture must obey Android runtime permission and background-audio constraints
-- Command mode depends on an LLM-backed interpretation step
-- Task mode must preserve verbatim transcription
-- Local secrets must be stored securely
-- The app should remain functional under network interruptions and reconnect cleanly
+1. **Zealot server contract is unknown.** The Zellij IPC is Rust-based. Perth must abstract the transport layer so it can evolve as the zealot API solidifies.
+2. **Android audio lifecycle.** Background audio is increasingly restricted on Android 14+. Voice capture must be foreground-initiated.
+3. **Command safety is non-negotiable.** LLM-interpreted commands must always pass through a confirmation gate before execution.
+4. **On-device vs cloud voice.** Hybrid approach needed: on-device for privacy and offline, cloud fallback for accuracy.
 
 ### Cross-Cutting Concerns Identified
 
-- Session state synchronization across tabs, panes, and active selection
-- Voice capture lifecycle and permission handling
-- Command safety, confirmation, and auditability
-- Error handling and reconnect behavior
-- Secure storage for server details and provider credentials
-- UI responsiveness during live session updates
-- Privacy boundaries for audio and transcripts
+- **Authentication:** Server connection, LLM API keys, secure storage
+- **Error handling:** Network drops, voice capture failures, LLM errors, command execution failures
+- **State management:** Active session, active tab/pane, voice mode, connection status
+- **Lifecycle management:** Android activity/fragment lifecycle, foreground service for voice, reconnection
+- **Observability:** Command audit log, error reporting, connection diagnostics
 
-### Architectural Implications
-
-- Use a layered client architecture with explicit boundaries between UI, state, domain logic, and transports.
-- Treat zealot integration as an adapter so the protocol can change without rewriting the app.
-- Keep voice capture and transcription isolated from core navigation logic.
-- Model command mode as a gated workflow rather than a direct terminal passthrough.
-- Prefer local persistence for metadata and preferences, not raw audio.
-
-### Validation Notes
-
-This scope is consistent with a greenfield Android client, not a server platform. The architecture must optimize for mobile ergonomics, small-screen navigation, and safe voice-driven terminal actions.
+---
 
 ## Starter Template Evaluation
 
 ### Primary Technology Domain
 
-Mobile app (Android), specifically a Compose-first Kotlin application.
+**Android Native (Kotlin + Jetpack Compose)** based on PRD requirements. This is not a cross-platform project. The PRD explicitly scopes to Android-only for MVP, and the voice + terminal integration benefits from native platform access.
 
 ### Starter Options Considered
 
-1. **Android Studio Empty Activity with Jetpack Compose**
-   - Best fit for a greenfield native Android client.
-   - Establishes Kotlin, Compose, and Material 3 as the UI foundation.
-   - Keeps the app architecture intentionally simple and extensible.
+| Option | Description | Verdict |
+|--------|-------------|---------|
+| Android Studio New Project (Compose Activity) | Google's official Compose starter | Selected |
+| Now in Android (NiA) | Google's reference architecture app | Too complex for starting point |
+| Jetpack Compose Template (community) | Various community starters | Inconsistent quality |
 
-2. **Android Studio Basic Activity / legacy view-based template**
-   - Not preferred.
-   - Would introduce View-based scaffolding that Perth does not need.
-   - Adds migration overhead without architectural benefit.
+### Selected Starter: Android Studio Compose Activity Template
 
-3. **Custom from scratch with no starter**
-   - Possible, but slower and more error-prone.
-   - Would require re-creating standard Android project wiring manually.
-
-### Selected Starter: Android Studio Empty Activity (Compose)
-
-**Rationale for Selection:**
-
-Perth is a greenfield Android app and should start with the simplest Compose-native template. The Android docs describe Compose as the modern Android UI toolkit and emphasize state-driven UI, performance best practices, and tooling support. A Compose starter avoids legacy View baggage and gives the cleanest base for swipe navigation, voice controls, and terminal/session rendering.
+**Rationale:** Google's official Compose Activity template provides the cleanest starting point. It includes Compose setup, Material 3 theming, and Gradle configuration without opinionated architecture. Perth's architecture is sufficiently custom (voice, WebSocket, Zellij protocol) that a heavier starter would create more conflict than value.
 
 **Initialization Command:**
 
-```text
-Android Studio → New Project → Empty Activity → Enable Jetpack Compose
+```bash
+# Via Android Studio: File > New > New Project > Empty Compose Activity
+# Project name: Perth
+# Package: sh.delo.perth
+# Min SDK: API 28 (Android 9)
+# Build: Kotlin DSL (build.gradle.kts)
 ```
 
-### Architectural Decisions Provided by Starter
+**Architectural Decisions Provided by Starter:**
 
-**Language & Runtime:**
-- Kotlin as the app language
-- Modern Android runtime and Gradle build setup
+- **Language & Runtime:** Kotlin 2.0+, JVM target 17
+- **UI Framework:** Jetpack Compose with Material 3
+- **Build Tooling:** Gradle 8.x with Kotlin DSL, AGP 8.x
+- **Testing Framework:** JUnit (basic), Compose test rule (basic)
+- **Code Organization:** Single-module with `src/main/java` and `src/androidTest/java`
 
-**Styling Solution:**
-- Jetpack Compose UI
-- Material 3 components
-- Compose theme system
+**What the starter does NOT provide (Perth must add):**
 
-**Build Tooling:**
-- Gradle-based Android project setup
-- Android Studio tooling and previews
-- Compose performance tooling
+- Multi-module project structure
+- Dependency injection (Hilt)
+- Navigation (Navigation Compose)
+- Networking (OkHttp, Retrofit)
+- Local storage (Room, DataStore)
+- Voice capture infrastructure
+- WebSocket transport layer
 
-**Testing Framework:**
-- Standard Android test sources
-- Compatible with JUnit, Robolectric, and Espresso
+**Note:** Project initialization using this command should be the first implementation story.
 
-**Code Organization:**
-- Clean separation between UI, state, and resources
-- Easy to extend into layered architecture
-
-**Development Experience:**
-- Fast UI iteration with Compose tooling
-- Preview support and modern Android Studio workflow
-- Clean base for adding voice and session features
-
-**Note:** Project initialization using this template should be the first implementation story.
+---
 
 ## Core Architectural Decisions
 
 ### Decision Priority Analysis
 
 **Critical Decisions (Block Implementation):**
-- Android-first Compose UI stack
-- Layered client architecture with ViewModel/state ownership
-- Zealot transport abstraction
-- Secure storage and permission model
-- Voice mode safety and confirmation model
+
+1. Transport protocol for zealot server
+2. Voice recognition stack selection
+3. LLM provider for command mode
+4. Android architecture pattern (MVVM layers)
+5. Dependency injection framework
 
 **Important Decisions (Shape Architecture):**
-- Session caching strategy
-- Navigation and swipe interaction structure
-- Command execution logging and auditability
-- Error handling and reconnect strategy
+
+6. Navigation architecture
+7. Local storage strategy
+8. Testing framework stack
+9. Error handling strategy
+10. State management approach
 
 **Deferred Decisions (Post-MVP):**
+
 - Multi-server support
-- Rich offline caching
-- Advanced automation workflows
+- Advanced offline caching
+- Voice provider hot-swapping
+- Command templates and shortcuts
 
 ### Data Architecture
 
-- **Local database:** Room for session history, pane metadata, and recent transcript/task state.
-- **Preferences:** DataStore for UI settings, server address, selected voice provider, and mode defaults.
-- **Secrets:** EncryptedSharedPreferences for server credentials and API keys.
-- **Caching:** Keep recent session snapshots in memory and persist only safe metadata locally.
+**Local Storage:**
 
-**Rationale:**
-Perth is a client app with important local state and sensitive credentials. A simple local persistence stack is enough and avoids unnecessary backend complexity.
+| Technology | Purpose | Rationale |
+|------------|---------|-----------|
+| Room 2.6.x | Session history, recent transcripts, command audit log | Structured relational data with migration support |
+| DataStore (Preferences) | App settings, voice mode preference, last server | Key-value settings, type-safe, coroutine-native |
+| EncryptedSharedPreferences | LLM API keys, server credentials | Android Keystore-backed encryption for secrets |
+
+**Data Modeling Approach:**
+- Room entities for persistent structured data (sessions, transcripts, audit log)
+- DataStore for user preferences and app state
+- In-memory StateFlow for transient UI state (active pane, connection status, voice capture state)
+- No ORM beyond Room. Keep data layer thin.
+
+**Migration Strategy:**
+- Room auto-migrations for schema changes
+- Fallback destructive migration only in development builds
+- DataStore handles its own versioning
 
 ### Authentication & Security
 
-- **Server credentials:** Store securely, never in plaintext preferences.
-- **Microphone access:** Request runtime permission only when the user initiates voice capture.
-- **Voice capture:** Treat as foreground-initiated and short-lived.
-- **Command safety:** Require explicit confirmation for destructive or ambiguous command execution.
-- **Auditability:** Record what was approved and what was sent to the active pane.
+**Server Authentication:**
+- Connection to zealot via configurable server URL
+- Auth mechanism TBD (depends on zealot contract). Architecture supports token-based auth via an `AuthInterceptor` on OkHttp.
+- Credentials stored in EncryptedSharedPreferences
 
-**Rationale:**
-Security risk is concentrated around command execution and secrets, not around multi-user auth complexity. The architecture should focus on permission gating, secure storage, and confirmation flow.
+**LLM API Security:**
+- API keys stored in EncryptedSharedPreferences
+- Keys never logged or exposed in UI
+- Network calls over HTTPS only
 
-### API & Communication Patterns
+**Command Execution Security:**
+- All commands pass through `CommandSafetyGate` before execution
+- Destructive command detection via pattern matching + LLM classification
+- Mandatory user confirmation dialog before any command runs
+- Full audit log in Room database: timestamp, command, source transcript, user decision, result
 
-- **Primary pattern:** A transport adapter layer between Perth and zealot.
-- **Supported transports:** WebSocket/HTTP if zealot exposes them; fallback bridge/CLI or Rust IPC adapter if required.
-- **Error model:** Standardize transport errors, reconnect errors, and command errors before they reach the UI.
-- **State sync:** Keep session, tab, and pane state in a single repository-driven source of truth.
+**Microphone Permission:**
+- Runtime permission request at point of use (not on app start)
+- Graceful degradation to typed input if denied
+- Permission rationale dialog shown on first denial
 
-**Rationale:**
-The exact zealot contract is still unknown, so the architecture must stay flexible. A protocol-agnostic adapter prevents implementation lock-in.
+### API & Communication
+
+**Zealot Transport (Critical Decision):**
+
+Perth uses a **WebSocket-first transport adapter** with HTTP REST fallback.
+
+```
+┌──────────────┐     WebSocket      ┌──────────────┐
+│  Perth App   │ ◄────────────────► │ Zealot Server│
+│              │     (primary)      │              │
+│  Transport   │                    │  Zellij IPC  │
+│  Adapter     │ ◄── HTTP REST ──► │  Bridge      │
+│              │     (fallback)     │              │
+└──────────────┘                    └──────────────┘
+```
+
+**Transport Adapter Interface:**
+
+```kotlin
+interface ZealotTransport {
+    suspend fun connect(config: ServerConfig): ConnectionResult
+    suspend fun disconnect()
+    fun sessionFlow(): Flow<List<ZellijSession>>
+    fun paneOutputFlow(paneId: PaneId): Flow<PaneOutput>
+    suspend fun sendInput(paneId: PaneId, input: String): Result<Unit>
+    suspend fun sendCommand(paneId: PaneId, command: String): Result<CommandResult>
+    val connectionState: StateFlow<ConnectionState>
+}
+```
+
+This interface isolates the transport completely. Implementations can be:
+- `WebSocketZealotTransport` (primary, real-time)
+- `HttpZealotTransport` (fallback, polling)
+- `MockZealotTransport` (testing)
+- `CliZealotTransport` (future: local daemon bridge)
+
+**Message Format:** JSON over WebSocket. Compact payloads. Binary/audio never sent through this channel.
+
+**Error Handling Standards:**
+- All network operations return `Result<T>` (Kotlin sealed type)
+- Retry with exponential backoff for transient failures (max 3 retries)
+- Connection state exposed as `StateFlow<ConnectionState>` (Connected, Connecting, Disconnected, Error)
 
 ### Frontend Architecture
 
-- **UI framework:** Jetpack Compose.
-- **State management:** ViewModel + StateFlow.
-- **Navigation:** Compose navigation and screen-based session/tab views.
-- **Interaction model:** Swipe gestures for tabs/panes, explicit mode controls, and clear active-pane state.
-- **Pattern:** Unidirectional data flow from UI → state → domain → transport.
+**Architecture Pattern: MVVM + Clean Architecture Layers**
 
-**Rationale:**
-Compose is a clean fit for a state-driven Android client, especially for the swipeable, screen-like UI described in the PRD.
+```
+┌─────────────────────────────────────────────┐
+│  Presentation Layer (Compose UI)            │
+│  ├── Screens (SessionList, Terminal, Voice) │
+│  ├── Components (PaneView, VoiceControl)    │
+│  └── Theme (Material 3, Typography, Color)  │
+├─────────────────────────────────────────────┤
+│  State Layer (ViewModels + StateFlow)       │
+│  ├── SessionViewModel                       │
+│  ├── TerminalViewModel                      │
+│  ├── VoiceViewModel                         │
+│  └── CommandViewModel                       │
+├─────────────────────────────────────────────┤
+│  Domain Layer (Use Cases)                   │
+│  ├── ConnectToSession                       │
+│  ├── NavigatePane                           │
+│  ├── CaptureVoice                           │
+│  ├── TranscribeSpeech                       │
+│  ├── InterpretCommand                       │
+│  └── ExecuteCommand                         │
+├─────────────────────────────────────────────┤
+│  Data Layer (Repositories + Adapters)       │
+│  ├── ZealotRepository (transport adapter)   │
+│  ├── VoiceRepository (speech recognition)   │
+│  ├── LlmRepository (command interpretation) │
+│  ├── SessionRepository (Room + cache)       │
+│  └── SettingsRepository (DataStore)         │
+└─────────────────────────────────────────────┘
+```
+
+**State Management:**
+- ViewModel + StateFlow as single source of truth per screen
+- Unidirectional data flow: UI Event -> ViewModel -> Use Case -> Repository -> State Update -> Recomposition
+- `rememberSaveable` for UI state that survives config changes
+- No global state store. Each ViewModel owns its domain state.
+
+**Navigation:**
+- Navigation Compose with type-safe routes
+- Top-level destinations: SessionList, Terminal (with tab pager), Settings
+- Terminal screen uses `HorizontalPager` for tab swipe navigation
+- Within each tab, pane selection via tap or vertical swipe
+
+**Dependency Injection:**
+- Hilt (Dagger) for compile-time DI
+- `@HiltViewModel` for all ViewModels
+- `@Singleton` for repositories and transport adapter
+- Module bindings for interface implementations (transport, voice, LLM)
+
+### Voice Architecture
+
+**Hybrid Voice Stack:**
+
+```
+┌──────────────────────────────────────────────┐
+│  Voice Capture Layer (Android AudioRecord)   │
+│  └── Foreground-initiated, permission-gated  │
+├──────────────────────────────────────────────┤
+│  Speech Recognition Dispatcher               │
+│  ├── Primary: ML Kit GenAI Speech (on-device)│
+│  ├── Fallback: OpenAI Whisper API (cloud)    │
+│  └── Interface: SpeechRecognizer             │
+├──────────────────────────────────────────────┤
+│  Mode Router                                 │
+│  ├── Transcription Mode → paste to pane      │
+│  ├── Task Mode → write task.md               │
+│  └── Command Mode → LLM → safety → execute  │
+└──────────────────────────────────────────────┘
+```
+
+**SpeechRecognizer Interface:**
+
+```kotlin
+interface SpeechRecognizer {
+    suspend fun recognize(audio: AudioStream): Result<Transcript>
+    val isAvailable: StateFlow<Boolean>
+}
+```
+
+Implementations: `MlKitSpeechRecognizer`, `WhisperSpeechRecognizer`
+
+**LLM Provider for Command Mode:**
+- OpenAI API (GPT-4o-mini or equivalent) for command interpretation
+- Structured output: command plan as JSON with steps, risk level, confirmation requirements
+- Prompt templates per mode stored in resources
+- Response validation before presenting to user
 
 ### Infrastructure & Deployment
 
-- **App type:** Client-only Android app.
-- **Packaging:** Android App Bundle for release builds.
-- **Distribution:** Play Store first, with F-Droid/direct APK as secondary channels if needed.
-- **Build tooling:** Android Studio + Gradle with CI running lint/tests on every change.
-- **Observability:** Basic crash reporting and app-health signals if needed later.
+**Distribution:**
+- Google Play Store (primary)
+- Direct APK (testing/beta)
+- F-Droid (future, if open-sourced)
 
-**Rationale:**
-Perth does not need custom backend infrastructure for the MVP. Release and quality discipline matter more than service scaling.
+**CI/CD:**
+- GitHub Actions for build, lint, test on every push
+- Android App Bundle for release builds
+- Automated signing via GitHub Secrets
+
+**Monitoring:**
+- Firebase Crashlytics for crash reporting (optional, can be deferred)
+- Structured logging via Timber with custom tree for command audit
+- No analytics in MVP
+
+**Min SDK:** API 28 (Android 9.0) - covers 95%+ of active devices, required for EncryptedSharedPreferences
 
 ### Decision Impact Analysis
 
 **Implementation Sequence:**
-1. Initialize Compose Android app shell.
-2. Add local state, settings, and secure storage.
-3. Implement zealot transport adapter.
-4. Build session and pane navigation.
-5. Add voice capture and transcription flows.
-6. Add command mode with safety gate.
-7. Add tests and release checks.
+
+1. Project scaffold (Compose + Hilt + Navigation)
+2. Transport adapter interface + mock implementation
+3. Session list UI + ViewModel
+4. Terminal display with tab pager
+5. Voice capture infrastructure
+6. Speech recognition (ML Kit primary)
+7. Transcription mode (voice -> paste)
+8. Task mode (voice -> task.md)
+9. LLM integration (OpenAI)
+10. Command mode (voice -> LLM -> safety -> execute)
 
 **Cross-Component Dependencies:**
-- Starter template decision enables Compose-first frontend work.
-- Transport adapter influences session sync, command execution, and reconnect behavior.
-- Secure storage supports both server access and voice-provider configuration.
-- Command safety depends on the frontend confirmation flow and transport error model.
+
+- Voice modes all depend on shared voice capture layer
+- Command mode depends on both voice capture AND LLM integration
+- All modes depend on transport adapter for pane targeting
+- Settings affects voice provider selection, server config, and LLM keys
+
+---
 
 ## Implementation Patterns & Consistency Rules
 
-### Pattern Categories Defined
-
-**Critical Conflict Points Identified:**
-7 areas where AI agents could make different choices:
-- package and class naming
-- feature/module organization
-- UI state modeling
-- transport/event naming
-- error and loading state handling
-- test placement and naming
-- JSON/data format conventions
-
 ### Naming Patterns
 
-**Code Naming Conventions:**
-- Kotlin packages use lowercase dot-separated names only.
-- Class and composable names use `PascalCase`.
-- ViewModels end with `ViewModel`.
-- UI state types end with `UiState`.
-- One screen per primary composable file where practical.
+**Kotlin Code Naming:**
 
-**Examples:**
-- `feature.session.SessionListScreen`
-- `feature.voice.VoiceModeViewModel`
-- `CommandModeUiState`
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Package | lowercase, dot-separated | `sh.delo.perth.data.repository` |
+| Class | PascalCase | `SessionViewModel` |
+| Interface | PascalCase (no I prefix) | `ZealotTransport` |
+| Function | camelCase | `connectToServer()` |
+| Property | camelCase | `connectionState` |
+| Constant | SCREAMING_SNAKE | `MAX_RETRY_COUNT` |
+| Composable | PascalCase | `SessionListScreen` |
+| State holder | camelCase with State suffix | `sessionListState` |
+| Flow | camelCase | `sessionFlow` |
+| StateFlow | camelCase with underscore-private pattern | `_state` / `state` |
 
-**Anti-patterns:**
-- `session_list_screen.kt`
-- mixed camelCase/snake_case names in the same package
-- generic names like `Manager`, `Helper`, or `Utils` for core feature code
+**File Naming:**
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Kotlin source | PascalCase matching class | `SessionViewModel.kt` |
+| Compose screen | PascalCase with Screen suffix | `SessionListScreen.kt` |
+| Compose component | PascalCase | `VoiceControlPanel.kt` |
+| Test | PascalCase with Test suffix | `SessionViewModelTest.kt` |
+| Resource layout | Not applicable (Compose) | N/A |
+| String resource | snake_case | `error_connection_failed` |
+
+**Database Naming:**
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Table | snake_case, plural | `sessions`, `command_audit_logs` |
+| Column | snake_case | `session_id`, `created_at` |
+| Foreign key | referenced_table_id | `session_id` |
+| Index | idx_table_column | `idx_sessions_server_url` |
+
+**API/JSON Naming:**
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| JSON field | snake_case | `session_id`, `pane_output` |
+| WebSocket message type | dot.separated | `session.list`, `pane.output` |
+| Event name | dot.separated.past_tense | `session.connected`, `command.executed` |
 
 ### Structure Patterns
 
-**Project Organization:**
-- Organize by feature first, then layer within each feature.
-- Keep shared app infrastructure in `core/`.
-- Keep domain logic separate from Compose UI.
-- Keep transport adapters separate from repositories.
+**Module Organization:** Feature-based with shared core.
 
-**Recommended structure:**
-- `core/` - logging, result types, app-wide utilities
-- `feature/session/` - session list, tab/pane UI, active pane state
-- `feature/voice/` - voice capture, transcription, command modes
-- `feature/settings/` - server and provider settings
-- `data/` - repository implementations and local storage
-- `domain/` - use cases and business rules
+Each feature module contains:
+```
+feature-name/
+├── data/           # Repository implementations, data sources
+├── domain/         # Use cases, domain models, interfaces
+└── ui/             # Composables, ViewModels, UI state
+```
 
-**File Structure Patterns:**
-- Tests live alongside code for unit tests when simple, and under `src/androidTest` for UI flows.
-- Compose screens and their ViewModels stay near each other.
-- Transport interfaces live with the feature they serve.
-- Shared models live in `domain/model` or `core/model`.
+**Test Co-location:**
+- Unit tests mirror source structure under `src/test/`
+- Android tests (Espresso) under `src/androidTest/`
+- Test utilities in `src/testFixtures/` (shared between test and androidTest)
 
 ### Format Patterns
 
-**Data Exchange Formats:**
-- Internal state uses immutable Kotlin data classes.
-- Transport payloads use JSON with camelCase field names.
-- Errors use a normalized sealed result model with `success`, `recoverableError`, and `fatalError` cases.
-- Timestamp values should be represented in ISO-8601 when serialized.
+**Result Type (all async operations):**
+
+```kotlin
+sealed class AppResult<out T> {
+    data class Success<T>(val data: T) : AppResult<T>()
+    data class Error(val exception: AppException) : AppResult<Nothing>()
+}
+```
+
+**AppException hierarchy:**
+
+```kotlin
+sealed class AppException(message: String, cause: Throwable? = null) : Exception(message, cause) {
+    class Network(message: String, cause: Throwable? = null) : AppException(message, cause)
+    class Server(val code: Int, message: String) : AppException(message)
+    class Voice(message: String, cause: Throwable? = null) : AppException(message, cause)
+    class Command(message: String) : AppException(message)
+    class Storage(message: String, cause: Throwable? = null) : AppException(message, cause)
+}
+```
+
+**UI State Pattern:**
+
+```kotlin
+data class ScreenUiState(
+    val isLoading: Boolean = false,
+    val error: AppException? = null,
+    val data: ScreenData? = null
+)
+```
+
+Every screen ViewModel exposes a single `StateFlow<ScreenUiState>`.
 
 ### Communication Patterns
 
-**State Management Patterns:**
-- UI emits actions; ViewModels own state updates.
-- Repository/transport layers never mutate UI state directly.
-- Use immutable state updates only.
-- Centralize session/voice mode state in a single source of truth per feature.
+**ViewModel to Repository:** Direct suspend function calls via use cases. No event bus.
 
-**Event System Patterns:**
-- Use sealed classes for actions and events.
-- Name events by intent, not transport details.
-- Example: `SessionSelected`, `PaneSwiped`, `VoiceCaptureStarted`, `CommandConfirmed`.
+**Repository to ViewModel:** Flow emissions for live data (session state, pane output). Suspend return for one-shot operations.
+
+**Cross-ViewModel Communication:** Navigation arguments or shared repository state. No ViewModel-to-ViewModel direct calls.
+
+**Logging:**
+
+```kotlin
+Timber.d("Session connected: sessionId=%s", sessionId)  // Debug
+Timber.w("Reconnect attempt %d of %d", attempt, maxRetries)  // Warning
+Timber.e(exception, "Command execution failed: %s", command)  // Error
+```
+
+All logs use structured format with `key=value` pairs. No sensitive data in logs.
 
 ### Process Patterns
 
-**Error Handling Patterns:**
-- Normalize transport and voice errors before they reach UI.
-- Show user-facing errors in clear, short language.
-- Log technical details separately from the visible message.
-- Use retry only in the transport layer, never inside composables.
+**Loading State:** Each ViewModel manages its own loading state via `UiState.isLoading`. No global loading indicator.
 
-**Loading State Patterns:**
-- Each screen uses explicit `Loading`, `Ready`, and `Error` states.
-- Long-running operations must surface progress or recording indicators.
-- Voice capture uses a live listening state distinct from general loading.
+**Error Recovery:**
+1. Network errors: Automatic retry with exponential backoff (1s, 2s, 4s, max 3)
+2. Voice errors: Show error in UI, offer retry or fallback to typed input
+3. LLM errors: Show error, offer retry or manual command entry
+4. Storage errors: Log and show user-friendly message
+
+**Command Execution Flow:**
+
+```
+Voice Input → Transcription → LLM Interpretation → Command Plan
+    → Safety Classification → Confirmation Dialog → Execute → Audit Log
+```
+
+Every step is observable. Any step can fail and the flow stops with a user-visible error.
 
 ### Enforcement Guidelines
 
 **All AI Agents MUST:**
-- keep Kotlin code feature-organized and Compose-first
-- preserve immutable state flow from UI to domain to transport
-- use the standardized result/error model
 
-**Pattern Enforcement:**
-- Verify new files fit the feature/layer structure before adding them.
-- Prefer existing package roots over introducing new ones.
-- Record any pattern exceptions in architecture notes before implementation.
+1. Use the `AppResult<T>` sealed class for all async operation returns
+2. Follow the ViewModel `_state`/`state` pattern for StateFlow exposure
+3. Use Hilt `@Inject` for all dependencies, never manual instantiation
+4. Place files in the correct feature module and layer package
+5. Write unit tests for all ViewModels and use cases
+6. Use `Timber` for logging, never `Log.d` directly
+7. Return `AppResult.Error` instead of throwing exceptions in repositories
 
-### Pattern Examples
+**Anti-Patterns to Avoid:**
 
-**Good Examples:**
-- `feature/voice/VoiceCaptureScreen.kt`
-- `feature/session/SessionRepository.kt`
-- `data/zealot/ZealotTransportAdapter.kt`
-- `CommandModeUiState(loading = true, error = null)`
+- Direct Android framework calls from ViewModels (use repository abstractions)
+- Mutable state exposed from ViewModels (always expose immutable StateFlow)
+- Business logic in Composables (delegate to ViewModel)
+- Hardcoded strings in UI (use string resources)
+- Blocking calls on main thread (use `withContext(Dispatchers.IO)`)
 
-**Anti-Patterns:**
-- `misc.kt` with unrelated functions
-- direct UI updates from a network callback
-- separate ad hoc error strings scattered across screens
-- transport logic embedded inside composables
+---
 
 ## Project Structure & Boundaries
 
 ### Complete Project Directory Structure
 
-```text
-Perth/
+```
+perth/
 ├── README.md
-├── build.gradle.kts
-├── settings.gradle.kts
-├── gradle.properties
+├── build.gradle.kts                    # Root build config
+├── settings.gradle.kts                 # Module declarations
+├── gradle.properties                   # Gradle config
 ├── gradle/
-│   └── libs.versions.toml
-├── app/
+│   ├── libs.versions.toml              # Version catalog
+│   └── wrapper/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                      # Build + test on push
+│       └── release.yml                 # Release build + signing
+├── .gitignore
+├── .editorconfig
+│
+├── app/                                # Application module
 │   ├── build.gradle.kts
-│   └── src/
-│       ├── main/
-│       │   ├── AndroidManifest.xml
-│       │   ├── java/com/delo/perth/
-│       │   │   ├── PerthApplication.kt
-│       │   │   ├── MainActivity.kt
-│       │   │   ├── core/
-│       │   │   │   ├── logging/
-│       │   │   │   ├── result/
-│       │   │   │   ├── permissions/
-│       │   │   │   └── ui/
-│       │   │   ├── data/
-│       │   │   │   ├── local/
-│       │   │   │   │   ├── database/
-│       │   │   │   │   ├── datastore/
-│       │   │   │   │   └── secure/
-│       │   │   │   └── zealot/
-│       │   │   ├── domain/
-│       │   │   │   ├── model/
-│       │   │   │   └── usecase/
-│       │   │   └── feature/
-│       │   │       ├── session/
-│       │   │       │   ├── SessionListScreen.kt
-│       │   │       │   ├── SessionViewModel.kt
-│       │   │       │   └── SessionRepository.kt
-│       │   │       ├── voice/
-│       │   │       │   ├── VoiceCaptureScreen.kt
-│       │   │       │   ├── VoiceViewModel.kt
-│       │   │       │   └── VoiceTranscriptionRepository.kt
-│       │   │       ├── command/
-│       │   │       │   ├── CommandModeScreen.kt
-│       │   │       │   ├── CommandViewModel.kt
-│       │   │       │   └── CommandPlanner.kt
-│       │   │       ├── task/
-│       │   │       │   ├── TaskModeScreen.kt
-│       │   │       │   ├── TaskViewModel.kt
-│       │   │       │   └── TaskWriter.kt
-│       │   │       └── settings/
-│       │   │           ├── SettingsScreen.kt
-│       │   │           ├── SettingsViewModel.kt
-│       │   │           └── SettingsRepository.kt
-│       │   ├── res/
-│       │   │   ├── values/
-│       │   │   ├── drawable/
-│       │   │   └── mipmap/
-│       │   └── assets/
-│       ├── test/
-│       │   └── java/com/delo/perth/
-│       │       ├── domain/
-│       │       ├── data/
-│       │       └── feature/
-│       └── androidTest/
-│           └── java/com/delo/perth/
-│               ├── feature/
-│               └── e2e/
-├── docs/
-│   ├── prd.md
-│   ├── architecture.md
-│   └── research/
-└── .github/
-    └── workflows/
-        └── android-ci.yml
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── AndroidManifest.xml
+│   │   │   ├── kotlin/sh/delo/perth/
+│   │   │   │   ├── PerthApp.kt         # Application class (Hilt entry)
+│   │   │   │   ├── MainActivity.kt     # Single activity
+│   │   │   │   ├── navigation/
+│   │   │   │   │   ├── PerthNavHost.kt
+│   │   │   │   │   └── Route.kt        # Type-safe route definitions
+│   │   │   │   │
+│   │   │   │   ├── feature/
+│   │   │   │   │   ├── session/
+│   │   │   │   │   │   ├── ui/
+│   │   │   │   │   │   │   ├── SessionListScreen.kt
+│   │   │   │   │   │   │   ├── SessionListViewModel.kt
+│   │   │   │   │   │   │   └── SessionListUiState.kt
+│   │   │   │   │   │   ├── domain/
+│   │   │   │   │   │   │   ├── ConnectToSessionUseCase.kt
+│   │   │   │   │   │   │   └── GetSessionsUseCase.kt
+│   │   │   │   │   │   └── data/
+│   │   │   │   │   │       └── SessionRepositoryImpl.kt
+│   │   │   │   │   │
+│   │   │   │   │   ├── terminal/
+│   │   │   │   │   │   ├── ui/
+│   │   │   │   │   │   │   ├── TerminalScreen.kt
+│   │   │   │   │   │   │   ├── TerminalViewModel.kt
+│   │   │   │   │   │   │   ├── TerminalUiState.kt
+│   │   │   │   │   │   │   ├── TabPager.kt
+│   │   │   │   │   │   │   └── PaneView.kt
+│   │   │   │   │   │   ├── domain/
+│   │   │   │   │   │   │   ├── NavigatePaneUseCase.kt
+│   │   │   │   │   │   │   └── SendInputUseCase.kt
+│   │   │   │   │   │   └── data/
+│   │   │   │   │   │       └── TerminalRepositoryImpl.kt
+│   │   │   │   │   │
+│   │   │   │   │   ├── voice/
+│   │   │   │   │   │   ├── ui/
+│   │   │   │   │   │   │   ├── VoiceControlPanel.kt
+│   │   │   │   │   │   │   ├── VoiceModeSelector.kt
+│   │   │   │   │   │   │   ├── VoiceViewModel.kt
+│   │   │   │   │   │   │   └── VoiceUiState.kt
+│   │   │   │   │   │   ├── domain/
+│   │   │   │   │   │   │   ├── CaptureVoiceUseCase.kt
+│   │   │   │   │   │   │   ├── TranscribeSpeechUseCase.kt
+│   │   │   │   │   │   │   └── VoiceMode.kt
+│   │   │   │   │   │   └── data/
+│   │   │   │   │   │       ├── VoiceRepositoryImpl.kt
+│   │   │   │   │   │       ├── MlKitSpeechRecognizer.kt
+│   │   │   │   │   │       └── WhisperSpeechRecognizer.kt
+│   │   │   │   │   │
+│   │   │   │   │   ├── command/
+│   │   │   │   │   │   ├── ui/
+│   │   │   │   │   │   │   ├── CommandConfirmationDialog.kt
+│   │   │   │   │   │   │   ├── CommandPlanView.kt
+│   │   │   │   │   │   │   ├── CommandViewModel.kt
+│   │   │   │   │   │   │   └── CommandUiState.kt
+│   │   │   │   │   │   ├── domain/
+│   │   │   │   │   │   │   ├── InterpretCommandUseCase.kt
+│   │   │   │   │   │   │   ├── ExecuteCommandUseCase.kt
+│   │   │   │   │   │   │   ├── CommandSafetyGate.kt
+│   │   │   │   │   │   │   ├── CommandPlan.kt
+│   │   │   │   │   │   │   └── SafetyClassification.kt
+│   │   │   │   │   │   └── data/
+│   │   │   │   │   │       ├── LlmRepositoryImpl.kt
+│   │   │   │   │   │       └── CommandAuditRepositoryImpl.kt
+│   │   │   │   │   │
+│   │   │   │   │   └── settings/
+│   │   │   │   │       ├── ui/
+│   │   │   │   │       │   ├── SettingsScreen.kt
+│   │   │   │   │       │   ├── SettingsViewModel.kt
+│   │   │   │   │       │   └── SettingsUiState.kt
+│   │   │   │   │       └── data/
+│   │   │   │   │           └── SettingsRepositoryImpl.kt
+│   │   │   │   │
+│   │   │   │   ├── core/
+│   │   │   │   │   ├── data/
+│   │   │   │   │   │   ├── db/
+│   │   │   │   │   │   │   ├── PerthDatabase.kt
+│   │   │   │   │   │   │   ├── dao/
+│   │   │   │   │   │   │   │   ├── SessionDao.kt
+│   │   │   │   │   │   │   │   └── CommandAuditDao.kt
+│   │   │   │   │   │   │   └── entity/
+│   │   │   │   │   │   │       ├── SessionEntity.kt
+│   │   │   │   │   │   │       └── CommandAuditEntity.kt
+│   │   │   │   │   │   ├── datastore/
+│   │   │   │   │   │   │   └── UserPreferences.kt
+│   │   │   │   │   │   └── secure/
+│   │   │   │   │   │       └── SecureStorage.kt
+│   │   │   │   │   │
+│   │   │   │   │   ├── domain/
+│   │   │   │   │   │   ├── model/
+│   │   │   │   │   │   │   ├── ZellijSession.kt
+│   │   │   │   │   │   │   ├── ZellijTab.kt
+│   │   │   │   │   │   │   ├── ZellijPane.kt
+│   │   │   │   │   │   │   ├── PaneId.kt
+│   │   │   │   │   │   │   ├── PaneOutput.kt
+│   │   │   │   │   │   │   ├── ServerConfig.kt
+│   │   │   │   │   │   │   ├── ConnectionState.kt
+│   │   │   │   │   │   │   └── Transcript.kt
+│   │   │   │   │   │   └── repository/
+│   │   │   │   │   │       ├── SessionRepository.kt
+│   │   │   │   │   │       ├── VoiceRepository.kt
+│   │   │   │   │   │       ├── LlmRepository.kt
+│   │   │   │   │   │       ├── CommandAuditRepository.kt
+│   │   │   │   │   │       └── SettingsRepository.kt
+│   │   │   │   │   │
+│   │   │   │   │   ├── network/
+│   │   │   │   │   │   ├── ZealotTransport.kt          # Interface
+│   │   │   │   │   │   ├── WebSocketZealotTransport.kt  # Primary impl
+│   │   │   │   │   │   └── SpeechRecognizer.kt          # Interface
+│   │   │   │   │   │
+│   │   │   │   │   ├── result/
+│   │   │   │   │   │   ├── AppResult.kt
+│   │   │   │   │   │   └── AppException.kt
+│   │   │   │   │   │
+│   │   │   │   │   └── di/
+│   │   │   │   │       ├── AppModule.kt
+│   │   │   │   │       ├── NetworkModule.kt
+│   │   │   │   │       ├── DatabaseModule.kt
+│   │   │   │   │       ├── VoiceModule.kt
+│   │   │   │   │       └── LlmModule.kt
+│   │   │   │   │
+│   │   │   │   └── ui/
+│   │   │   │       └── theme/
+│   │   │   │           ├── Theme.kt
+│   │   │   │           ├── Color.kt
+│   │   │   │           ├── Type.kt
+│   │   │   │           └── Shape.kt
+│   │   │   │
+│   │   │   └── res/
+│   │   │       ├── values/
+│   │   │       │   ├── strings.xml
+│   │   │       │   ├── colors.xml
+│   │   │       │   └── themes.xml
+│   │   │       ├── drawable/
+│   │   │       └── mipmap/
+│   │   │
+│   │   ├── test/                       # JVM unit tests
+│   │   │   └── kotlin/sh/delo/perth/
+│   │   │       ├── feature/
+│   │   │       │   ├── session/
+│   │   │       │   │   └── SessionListViewModelTest.kt
+│   │   │       │   ├── terminal/
+│   │   │       │   │   └── TerminalViewModelTest.kt
+│   │   │       │   ├── voice/
+│   │   │       │   │   └── VoiceViewModelTest.kt
+│   │   │       │   └── command/
+│   │   │       │       ├── CommandViewModelTest.kt
+│   │   │       │       └── CommandSafetyGateTest.kt
+│   │   │       └── core/
+│   │   │           └── network/
+│   │   │               └── WebSocketZealotTransportTest.kt
+│   │   │
+│   │   ├── androidTest/                # Instrumented tests
+│   │   │   └── kotlin/sh/delo/perth/
+│   │   │       ├── feature/
+│   │   │       │   ├── session/
+│   │   │       │   │   └── SessionListScreenTest.kt
+│   │   │       │   └── terminal/
+│   │   │       │       └── TerminalScreenTest.kt
+│   │   │       └── core/
+│   │   │           └── data/
+│   │   │               └── db/
+│   │   │                   └── PerthDatabaseTest.kt
+│   │   │
+│   │   └── testFixtures/               # Shared test utilities
+│   │       └── kotlin/sh/delo/perth/
+│   │           ├── FakeZealotTransport.kt
+│   │           ├── FakeSpeechRecognizer.kt
+│   │           └── TestData.kt
+│
+├── _bmad/                              # BMAD methodology (not shipped)
+├── _bmad-output/                       # BMAD artifacts (not shipped)
+├── docs/                               # Project documentation
+└── design-artifacts/                   # Design files
 ```
 
 ### Architectural Boundaries
 
 **API Boundaries:**
-- External API boundary lives in `data/zealot/`.
-- Command and session interactions never call the UI directly.
-- Authentication and permission checks remain in `core/permissions/` and `data/local/secure/`.
+
+| Boundary | Interface | Implementation |
+|----------|-----------|----------------|
+| Zealot Server | `ZealotTransport` | `WebSocketZealotTransport` |
+| Speech Recognition | `SpeechRecognizer` | `MlKitSpeechRecognizer`, `WhisperSpeechRecognizer` |
+| LLM Provider | `LlmRepository` | `LlmRepositoryImpl` (OpenAI) |
+| Local Storage | `SessionRepository`, etc. | Room + DataStore implementations |
 
 **Component Boundaries:**
-- Compose screens own rendering only.
-- ViewModels own screen state and translate user actions into domain calls.
-- Domain use cases enforce business rules.
-- Repositories hide storage, network, and provider-specific details.
 
-**Service Boundaries:**
-- Voice transcription providers are swappable behind `VoiceTranscriptionRepository`.
-- Zealot transport is swappable behind the session/command repositories.
-- LLM command planning is isolated in `CommandPlanner`.
+- Each feature (`session`, `terminal`, `voice`, `command`, `settings`) is self-contained
+- Features communicate only through `core/domain/model` shared types
+- No direct feature-to-feature imports
+- `core/` provides shared infrastructure (database, network, DI, result types)
 
 **Data Boundaries:**
-- Room stores session history and safe metadata only.
-- DataStore stores user preferences.
-- EncryptedSharedPreferences stores secrets.
-- Audio data stays ephemeral unless explicitly persisted.
+
+- Repositories are the sole data access point for ViewModels (via use cases)
+- Room database is accessed only through DAOs, never raw queries from features
+- Network calls go through the transport adapter interface, never OkHttp directly from features
+- Secure storage is accessed only through `SecureStorage` wrapper
 
 ### Requirements to Structure Mapping
 
-**Feature/Epic Mapping:**
-- **Epic 1 - Foundation and Session Sync** → `feature/session/`, `data/zealot/`, `domain/usecase/`, `core/result/`
-- **Epic 2 - Android Shell and Navigation** → `MainActivity.kt`, `feature/session/`, `feature/settings/`, `core/ui/`
-- **Epic 3 - Voice Capture and Transcription** → `feature/voice/`, `core/permissions/`, `data/local/secure/`
-- **Epic 4 - Task Mode** → `feature/task/`, `domain/usecase/`, `data/local/database/`
-- **Epic 5 - Command Mode and Safety** → `feature/command/`, `domain/usecase/`, `data/zealot/`
-- **Epic 6 - Settings, Storage, and Security** → `feature/settings/`, `data/local/datastore/`, `data/local/secure/`
-- **Epic 7 - Testing and Quality** → `app/src/test/`, `app/src/androidTest/`, `.github/workflows/android-ci.yml`
+**Epic: Foundation & Session Sync (Epic 1)**
+- Transport: `core/network/ZealotTransport.kt`, `WebSocketZealotTransport.kt`
+- Session: `feature/session/` (all layers)
+- Models: `core/domain/model/ZellijSession.kt`, `ZellijTab.kt`, `ZellijPane.kt`
+- Tests: `test/core/network/`, `test/feature/session/`
 
-**Cross-Cutting Concerns:**
-- Shared state types live in `domain/model/`.
-- Shared error/result types live in `core/result/`.
-- Logging utilities live in `core/logging/`.
-- Permission helpers live in `core/permissions/`.
+**Epic: Android Shell & Navigation (Epic 2)**
+- Navigation: `navigation/PerthNavHost.kt`, `Route.kt`
+- Terminal: `feature/terminal/ui/TerminalScreen.kt`, `TabPager.kt`, `PaneView.kt`
+- Theme: `ui/theme/`
+- Tests: `androidTest/feature/terminal/`
 
-### Integration Points
+**Epic: Voice Capture & Transcription (Epic 3)**
+- Voice: `feature/voice/` (all layers)
+- Recognizers: `feature/voice/data/MlKitSpeechRecognizer.kt`, `WhisperSpeechRecognizer.kt`
+- Interface: `core/network/SpeechRecognizer.kt`
+- Tests: `test/feature/voice/`
 
-**Internal Communication:**
-- UI sends actions to ViewModels.
-- ViewModels call use cases and repositories.
-- Repositories talk to Room, DataStore, secure storage, and zealot adapters.
-- State flows back to the UI through immutable state objects.
+**Epic: Task Mode (Epic 4)**
+- Shares voice infrastructure from Epic 3
+- Task-specific logic in `VoiceViewModel` via `VoiceMode.Task`
 
-**External Integrations:**
-- Zealot session transport lives in `data/zealot/`.
-- Voice providers are abstracted behind repository interfaces.
-- Android permissions are handled at the feature boundary, not scattered in UI code.
+**Epic: Command Mode & Safety (Epic 5)**
+- Command: `feature/command/` (all layers)
+- Safety: `feature/command/domain/CommandSafetyGate.kt`
+- LLM: `feature/command/data/LlmRepositoryImpl.kt`
+- Audit: `core/data/db/dao/CommandAuditDao.kt`
+- Tests: `test/feature/command/CommandSafetyGateTest.kt`
 
-**Data Flow:**
-- User action → screen → ViewModel → use case → repository → transport/storage → result → state update → recomposition.
+**Epic: Settings, Storage & Security (Epic 6)**
+- Settings: `feature/settings/`
+- Database: `core/data/db/`
+- Secure: `core/data/secure/SecureStorage.kt`
+- Preferences: `core/data/datastore/UserPreferences.kt`
 
-### File Organization Patterns
+### Data Flow
 
-**Configuration Files:**
-- Root Gradle and version catalog files stay at the project root.
-- Android app module config stays in `app/build.gradle.kts`.
-- CI config lives in `.github/workflows/`.
+```
+┌─────────┐    WebSocket     ┌──────────┐
+│ Zealot   │ ◄─────────────► │ Transport│
+│ Server   │    JSON msgs     │ Adapter  │
+└─────────┘                  └────┬─────┘
+                                  │ Flow<PaneOutput>
+                                  ▼
+                           ┌──────────────┐
+                           │  Repository  │
+                           │  (caches +   │
+                           │   Room)      │
+                           └──────┬───────┘
+                                  │ Flow<UiState>
+                                  ▼
+                           ┌──────────────┐
+                           │  ViewModel   │
+                           │  (StateFlow) │
+                           └──────┬───────┘
+                                  │ State
+                                  ▼
+                           ┌──────────────┐
+                           │  Compose UI  │
+                           │  (renders)   │
+                           └──────────────┘
+```
 
-**Source Organization:**
-- Feature-first organization with layered internals.
-- UI files stay close to their ViewModels and repositories.
-- Shared logic stays in `core/` or `domain/`.
-
-**Test Organization:**
-- Unit tests in `app/src/test`.
-- Android UI and end-to-end tests in `app/src/androidTest`.
-- Tests mirror the production package hierarchy.
-
-**Asset Organization:**
-- Android resources in `res/`.
-- No raw audio or generated transcripts in source assets by default.
-
-### Development Workflow Integration
-
-**Development Server Structure:**
-- Android Studio runs the app module directly.
-- Compose previews are used for UI iteration.
-
-**Build Process Structure:**
-- Gradle builds the app module and runs JVM/unit tests.
-- Android instrumentation tests run separately on devices/emulators.
-
-**Deployment Structure:**
-- Android App Bundle is the release artifact.
-- Play Store and optional F-Droid distribution come from the same app module build.
+---
 
 ## Architecture Validation Results
 
-### Coherence Validation ✅
+### Coherence Validation
 
 **Decision Compatibility:**
-All decisions work together: a greenfield Kotlin + Compose Android app with ViewModel/state ownership, secure local storage, and a transport adapter is internally consistent. The starter template, patterns, and structure all reinforce the same Android-native approach.
+All technology choices are compatible. Kotlin 2.0+ with Compose, Hilt, Room, DataStore, OkHttp, and Navigation Compose are all part of the standard Android Jetpack ecosystem. No version conflicts expected.
 
 **Pattern Consistency:**
-The implementation patterns support the architecture: feature-first organization, immutable state flow, sealed result types, and clear error/loading conventions all match the Compose-driven client design.
+- Naming conventions are consistent: camelCase for Kotlin code, snake_case for database and JSON, PascalCase for files/classes
+- All async operations use coroutines + Flow
+- All data access goes through repository interfaces
+- All state exposure uses StateFlow
 
 **Structure Alignment:**
-The project tree supports the architecture well. Feature directories map cleanly to epics, and the repository/transport split keeps zeallot integration, voice providers, and command planning isolated.
+- Feature-based organization maps cleanly to epics
+- Core module provides shared infrastructure without circular dependencies
+- Test structure mirrors source structure
 
-### Requirements Coverage Validation ✅
+### Requirements Coverage Validation
 
-**Epic/Feature Coverage:**
-All seven epics are represented in the structure and decision set.
+| Requirement | Architectural Support | Status |
+|-------------|----------------------|--------|
+| FR1 - Server Connection | `ZealotTransport` interface + `WebSocketZealotTransport` | Covered |
+| FR2 - Session Browser | `SessionRepository` + `SessionListScreen` | Covered |
+| FR3 - Tab/Pane Navigation | `TabPager` + `HorizontalPager` + swipe gestures | Covered |
+| FR4 - Active Pane Awareness | `TerminalViewModel` state + `PaneId` targeting | Covered |
+| FR5 - Typed Input Fallback | `SendInputUseCase` + text field in terminal UI | Covered |
+| FR6 - Voice Mode Selection | `VoiceModeSelector` + `VoiceMode` enum | Covered |
+| FR7 - Voice Capture | `CaptureVoiceUseCase` + Android AudioRecord | Covered |
+| FR8 - Transcription Mode | `TranscribeSpeechUseCase` + paste to pane | Covered |
+| FR9 - Task Mode | `TranscribeSpeechUseCase` + write task.md | Covered |
+| FR10 - Command Mode | `InterpretCommandUseCase` + `ExecuteCommandUseCase` | Covered |
+| FR11 - Command Safety | `CommandSafetyGate` + confirmation dialog | Covered |
+| FR12 - Error Handling | `AppResult` + `AppException` hierarchy | Covered |
+| FR13 - Reconnect Handling | `ConnectionState` + auto-reconnect in transport | Covered |
+| FR14 - Settings | `SettingsRepository` + `SettingsScreen` | Covered |
+| FR15 - Local Persistence | Room + DataStore + EncryptedSharedPreferences | Covered |
 
-**Functional Requirements Coverage:**
-All 15 FRs are architecturally supported through the session, voice, command, settings, data, and test layers.
+**NFR Coverage:**
+- Performance: Coroutines, incremental pane updates, on-device speech
+- Reliability: Auto-reconnect, graceful permission handling, confirmation gates
+- Security: EncryptedSharedPreferences, runtime permissions, command audit log
+- Privacy: On-device speech primary, audio ephemeral by default
+- Accessibility: Material 3 components with built-in accessibility support
 
-**Non-Functional Requirements Coverage:**
-Performance, reliability, security, privacy, accessibility, and Android compatibility are all addressed through state modeling, secure storage, confirmation gates, and a client-only deployment model.
+### Implementation Readiness Validation
 
-### Implementation Readiness Validation ✅
+**Decision Completeness:** All critical decisions documented with rationale. Transport adapter interface defined. Voice stack selected with fallback strategy.
 
-**Decision Completeness:**
-Critical decisions are documented clearly enough for implementation.
+**Structure Completeness:** Full project tree with every file and directory specified. Feature modules mapped to epics.
 
-**Structure Completeness:**
-The project structure is specific and complete enough to guide implementation.
-
-**Pattern Completeness:**
-Naming, structure, data, communication, error, and loading patterns are fully defined.
+**Pattern Completeness:** Naming, structure, format, communication, and process patterns all defined with examples and anti-patterns.
 
 ### Gap Analysis Results
 
-**Critical Gaps:**
-- Exact zealot server contract remains unknown.
+**Known Gaps (Acceptable for MVP):**
 
-**Important Gaps:**
-- Command safety policy details should be finalized during implementation.
-- Exact voice-provider selection at launch can be deferred until integration testing.
+1. **Zealot server contract details.** Mitigated by transport adapter interface. The `ZealotTransport` interface can be implemented against whatever protocol zealot exposes.
+2. **Terminal rendering fidelity.** How to render ANSI terminal output in Compose is a detailed implementation concern, not an architectural gap. A `PaneView` composable will handle this.
+3. **LLM prompt templates.** Specific prompt engineering for command interpretation is an implementation detail. The architecture supports it via `LlmRepository`.
 
-**Nice-to-Have Gaps:**
-- Multi-server support
-- Rich offline caching
-- More advanced automation workflows
-
-### Validation Issues Addressed
-
-No blocking validation issues remain. The architecture is ready for implementation with one acknowledged external dependency: the zealot transport contract.
+**No Critical Gaps.** Architecture is ready for implementation.
 
 ### Architecture Completeness Checklist
 
-**✅ Requirements Analysis**
+**Requirements Analysis**
+- [x] Project context thoroughly analyzed (15 FRs, 6 NFR categories)
+- [x] Scale and complexity assessed (Level 3, High)
+- [x] Technical constraints identified (zealot unknown, audio lifecycle, command safety)
+- [x] Cross-cutting concerns mapped (auth, error handling, state, lifecycle, observability)
 
-- [x] Project context thoroughly analyzed
-- [x] Scale and complexity assessed
-- [x] Technical constraints identified
-- [x] Cross-cutting concerns mapped
+**Architectural Decisions**
+- [x] Critical decisions documented with rationale
+- [x] Technology stack fully specified (Kotlin, Compose, Hilt, Room, OkHttp, ML Kit, OpenAI)
+- [x] Integration patterns defined (transport adapter, speech recognizer interface)
+- [x] Performance considerations addressed (on-device speech, coroutines, incremental updates)
 
-**✅ Architectural Decisions**
+**Implementation Patterns**
+- [x] Naming conventions established (Kotlin, DB, JSON, files)
+- [x] Structure patterns defined (feature-based, layered)
+- [x] Communication patterns specified (StateFlow, unidirectional, no event bus)
+- [x] Process patterns documented (error handling, loading states, command flow)
 
-- [x] Critical decisions documented with versions
-- [x] Technology stack fully specified
-- [x] Integration patterns defined
-- [x] Performance considerations addressed
-
-**✅ Implementation Patterns**
-
-- [x] Naming conventions established
-- [x] Structure patterns defined
-- [x] Communication patterns specified
-- [x] Process patterns documented
-
-**✅ Project Structure**
-
+**Project Structure**
 - [x] Complete directory structure defined
-- [x] Component boundaries established
-- [x] Integration points mapped
-- [x] Requirements to structure mapping complete
+- [x] Component boundaries established (feature isolation, core shared infra)
+- [x] Integration points mapped (transport, voice, LLM interfaces)
+- [x] Requirements to structure mapping complete (all epics mapped)
 
 ### Architecture Readiness Assessment
 
@@ -599,79 +909,30 @@ No blocking validation issues remain. The architecture is ready for implementati
 **Confidence Level:** High
 
 **Key Strengths:**
-- Compose-first Android-native design matches the product requirements.
-- Security and command-safety concerns are explicitly modeled.
-- The transport layer is abstracted to handle the unknown zealot contract.
-- The project structure is feature-based and easy for agents to follow.
+- Transport adapter isolates the biggest unknown (zealot protocol) behind a clean interface
+- Hybrid voice stack provides on-device privacy with cloud accuracy fallback
+- Command safety gate is architecturally enforced, not optional
+- Feature-based project structure maps directly to epics for clean parallel development
+- Standard Android Jetpack stack minimizes integration risk
 
 **Areas for Future Enhancement:**
-- Confirm zealot API/protocol details.
-- Refine command safety policy with implementation feedback.
-- Expand offline/session recovery features after MVP.
+- Multi-server support (post-MVP)
+- Voice provider hot-swapping UI
+- Offline session caching and sync
+- Command template library
+- Advanced terminal rendering (rich ANSI support)
 
 ### Implementation Handoff
 
 **AI Agent Guidelines:**
-
-- Follow all architectural decisions exactly as documented.
-- Use implementation patterns consistently across all components.
-- Respect project structure and boundaries.
-- Refer to this document for all architectural questions.
-
-**First Implementation Priority:**
-Create the Android Studio Compose starter app shell and wire up the basic feature/module structure.
-
-## Architecture Completion Summary
-
-### Workflow Completion
-
-**Architecture Decision Workflow:** COMPLETED ✅
-**Total Steps Completed:** 8
-**Date Completed:** 2026-03-29
-**Document Location:** /Users/delorenj/code/perth/_bmad-output/planning-artifacts/architecture.md
-
-### Final Architecture Deliverables
-
-**📋 Complete Architecture Document**
-
-- All architectural decisions documented with specific guidance
-- Implementation patterns ensuring AI agent consistency
-- Complete project structure with all files and directories
-- Requirements to architecture mapping
-- Validation confirming coherence and completeness
-
-**🏗️ Implementation Ready Foundation**
-
-- 5 critical decision areas defined
-- 7 implementation patterns/conflict points covered
-- 1 Android app architecture with feature-first structure
-- 15 functional requirements fully supported
-
-**📚 AI Agent Implementation Guide**
-
-- Compose-first Kotlin stack
-- Consistency rules that prevent implementation conflicts
-- Project structure with clear boundaries
-- Integration patterns and communication standards
-
-### Implementation Handoff
-
-**For AI Agents:**
-This architecture document is the complete guide for implementing Perth. Follow all decisions, patterns, and structures exactly as documented.
+- Follow all architectural decisions exactly as documented
+- Use implementation patterns consistently across all components
+- Respect project structure and feature module boundaries
+- Refer to this document for all architectural questions
+- When in doubt about zealot transport details, implement against `MockZealotTransport` first
 
 **First Implementation Priority:**
-Create the Android Studio Compose starter app shell and wire up the basic feature/module structure.
-
-**Development Sequence:**
-
-1. Initialize project using the documented starter template
-2. Set up development environment per architecture
-3. Implement core architectural foundations
-4. Build features following established patterns
-5. Maintain consistency with documented rules
-
-### Architecture Status
-
-**READY FOR IMPLEMENTATION ✅**
-
-Next phase: begin implementation using this architecture as the single source of truth.
+1. Initialize project with Android Studio Compose Activity template
+2. Set up Hilt, Navigation Compose, and multi-module structure
+3. Define `ZealotTransport` interface and `MockZealotTransport`
+4. Build `SessionListScreen` against mock data

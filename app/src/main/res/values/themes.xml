@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Perth uses Jetpack Compose with Material 3. The XML theme here is a
+        lightweight bridge theme used only by the Activity window before Compose
+        draws its first frame. The full Material 3 colour scheme and typography
+        are defined in ui/theme/Theme.kt (PerthTheme composable).
+    -->
+    <style name="Theme.Perth" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Status bar will be controlled via WindowCompat in PerthTheme -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+    <!-- Splash / launch theme shown before the Compose window is ready -->
+    <style name="Theme.Perth.Splash" parent="Theme.Perth">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>

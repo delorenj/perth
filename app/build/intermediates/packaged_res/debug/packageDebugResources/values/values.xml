@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Perth</string>
+    <string name="cd_connection_status">Connection status indicator</string>
+    <string name="cd_terminal_icon">Terminal session</string>
+    <string name="connection_connected">Connected</string>
+    <string name="connection_connecting">Connecting…</string>
+    <string name="connection_disconnected">Disconnected</string>
+    <string name="connection_error">Connection error</string>
+    <string name="error_generic">An unexpected error occurred</string>
+    <string name="error_network">Network error: %1$s</string>
+    <string name="error_server">Server error %1$d</string>
+    <string name="error_storage">Storage error</string>
+    <string name="error_voice">Voice recognition error</string>
+    <string name="session_list_empty">No sessions</string>
+    <string name="session_list_empty_hint">Connect a zealot server in Settings</string>
+    <string name="session_list_refresh">Refresh sessions</string>
+    <string name="session_list_settings">Settings</string>
+    <string name="session_list_title">Perth</string>
+    <string name="session_tabs_count">%d tab</string>
+    <string name="session_tabs_count_plural">%d tabs</string>
+    <string name="settings_llm_key_label">OpenAI API Key</string>
+    <string name="settings_llm_key_placeholder">sk-…</string>
+    <string name="settings_llm_key_save">Save API Key</string>
+    <string name="settings_llm_key_stored">API key stored securely</string>
+    <string name="settings_llm_key_update">Update API Key</string>
+    <string name="settings_llm_section">LLM API Key</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="settings_server_save">Save Server URL</string>
+    <string name="settings_server_section">Zealot Server</string>
+    <string name="settings_server_url_label">Server URL</string>
+    <string name="settings_server_url_placeholder">http://192.168.1.100:7800</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_voice_command">Command</string>
+    <string name="settings_voice_command_desc">Voice to LLM command (requires confirmation)</string>
+    <string name="settings_voice_mode_section">Voice Mode</string>
+    <string name="settings_voice_task">Task</string>
+    <string name="settings_voice_task_desc">Voice to task.md file</string>
+    <string name="settings_voice_transcription">Transcription</string>
+    <string name="settings_voice_transcription_desc">Voice to text, paste into active pane</string>
+    <string name="terminal_back">Back</string>
+    <string name="terminal_no_active_pane">No active pane</string>
+    <string name="terminal_no_output">No output yet…</string>
+    <string name="terminal_title">Terminal</string>
+    <style name="Theme.Perth" parent="Theme.Material3.DayNight.NoActionBar">
+        
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+    <style name="Theme.Perth.Splash" parent="Theme.Perth">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>

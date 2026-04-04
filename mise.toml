@@ -3,3 +3,6 @@
 
 [env]
 _.file = ".env"
+
+[tools]
+gradle = "9.4.1"
