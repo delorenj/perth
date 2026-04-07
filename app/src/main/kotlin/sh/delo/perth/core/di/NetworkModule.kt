@@ -20,7 +20,7 @@ abstract class NetworkModule {
 
     @Binds
     @Singleton
-    abstract fun bindZealotTransport(impl: WebSocketZealotTransport): ZealotTransport
+    abstract fun bindZealotTransport(impl: sh.delo.perth.core.network.MockZealotTransport): ZealotTransport
 
     companion object {
 
