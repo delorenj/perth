@@ -11,24 +11,24 @@ import sh.delo.perth.core.domain.model.PaneId
 import sh.delo.perth.core.domain.model.PaneOutput
 import sh.delo.perth.core.domain.model.ServerConfig
 import sh.delo.perth.core.domain.model.ZellijSession
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.core.result.AppException
 import sh.delo.perth.core.result.AppResult
 
 /**
- * Controllable fake [ZealotTransport] for unit tests.
+ * Controllable fake [ZellijTransport] for unit tests.
  *
  * Exposes mutable state and recorded calls so tests can assert on transport
  * interactions without spinning up a real WebSocket connection.
  *
  * Usage:
  * ```kotlin
- * val transport = FakeZealotTransport()
+ * val transport = FakeZellijTransport()
  * transport.emitSessions(TestData.ALL_SESSIONS)
  * transport.emitPaneOutput(TestData.PANE_OUTPUT_LINES.first())
  * ```
  */
-class FakeZealotTransport : ZealotTransport {
+class FakeZellijTransport : ZellijTransport {
 
     // ---------------------------------------------------------------------------
     // Mutable state the test controls
@@ -59,7 +59,7 @@ class FakeZealotTransport : ZealotTransport {
     val sendCommandCalls: MutableList<Pair<PaneId, String>> = mutableListOf()
 
     // ---------------------------------------------------------------------------
-    // ZealotTransport implementation
+    // ZellijTransport implementation
     // ---------------------------------------------------------------------------
 
     override suspend fun connect(config: ServerConfig): AppResult<Unit> {

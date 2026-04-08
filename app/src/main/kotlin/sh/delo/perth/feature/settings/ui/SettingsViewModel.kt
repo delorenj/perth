@@ -15,7 +15,7 @@ import sh.delo.perth.core.domain.model.ServerConfig
 import sh.delo.perth.core.domain.repository.LlmRepository
 import sh.delo.perth.core.domain.repository.SessionRepository
 import sh.delo.perth.core.domain.repository.SettingsRepository
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.core.result.AppException
 import timber.log.Timber
 import javax.inject.Inject
@@ -24,7 +24,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val sessionRepository: SessionRepository,
-    private val transport: ZealotTransport,
+    private val transport: ZellijTransport,
     private val llmRepository: LlmRepository,
 ) : ViewModel() {
 

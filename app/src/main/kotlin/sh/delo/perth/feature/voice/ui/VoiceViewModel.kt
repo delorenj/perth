@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import sh.delo.perth.core.domain.model.PaneId
 import sh.delo.perth.core.domain.repository.SettingsRepository
 import sh.delo.perth.core.domain.repository.VoiceRepository
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.core.result.AppException
 import sh.delo.perth.core.result.AppResult
 import sh.delo.perth.core.ui.RecoveryAction
@@ -28,7 +28,7 @@ class VoiceViewModel @Inject constructor(
     private val captureVoiceUseCase: CaptureVoiceUseCase,
     private val voiceRepository: VoiceRepository,
     private val settingsRepository: SettingsRepository,
-    private val transport: ZealotTransport,
+    private val transport: ZellijTransport,
     private val writeTaskUseCase: WriteTaskUseCase,
 ) : ViewModel() {
 
@@ -122,10 +122,16 @@ class VoiceViewModel @Inject constructor(
      *
      * [activePaneId] must be the currently focused Zellij pane. If null, an error is shown.
      */
-    fun onSend(activePaneId: PaneId?) {
+    fun onSend(activePaneId: PaneId?, onCommandTranscript: (String) -> Unit = {}) {
         val text = _state.value.editedTranscription.trim()
         if (text.isBlank()) {
             onCancel()
+            return
+        }
+
+        if (_state.value.selectedMode == VoiceMode.Command) {
+            onCommandTranscript(text)
+            resetToIdle()
             return
         }
 
@@ -148,8 +154,8 @@ class VoiceViewModel @Inject constructor(
     }
 
     /** Retries the last send operation using the same edited transcription. */
-    fun onRetrySend(activePaneId: PaneId?) {
-        onSend(activePaneId)
+    fun onRetrySend(activePaneId: PaneId?, onCommandTranscript: (String) -> Unit = {}) {
+        onSend(activePaneId, onCommandTranscript)
     }
 
     /** Discards the transcription and returns to Idle. */

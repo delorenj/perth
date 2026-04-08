@@ -1,0 +1,20 @@
+[package]
+name = "perth-bridge"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.7.5", features = ["ws"] }
+tokio = { version = "1.37.0", features = ["full"] }
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.115"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tower-http = { version = "0.5.2", features = ["cors", "auth"] }
+futures-util = "0.3.30"
+base64 = "0.22.0"
+tokio-util = { version = "0.7.10", features = ["codec"] }
+clap = { version = "4.5.4", features = ["derive"] }
+libc = "0.2.184"
+# Note: zellij-utils often requires matching the zellij version exactly.
+# For now, we'll start with raw UDS and add zellij-utils if needed for complex parsing.

@@ -21,7 +21,7 @@ sealed class RecoveryAction(val label: String) {
     /** Dismiss the error and close the current voice session. */
     object Dismiss : RecoveryAction("Dismiss")
 
-    /** Initiate a reconnect to the zealot server. */
+    /** Initiate a reconnect to the zellij server. */
     object Reconnect : RecoveryAction("Reconnect")
 
     /** Check or update API key in Settings. */

@@ -22,16 +22,16 @@ import javax.inject.Singleton
 
 /**
  * In-memory mock transport that returns realistic fake data for development and testing.
- * Bound in place of [WebSocketZealotTransport] until the zealot server protocol is finalised.
+ * Bound in place of [WebSocketZellijTransport] until the zellij server protocol is finalised.
  */
 @Singleton
-class MockZealotTransport @Inject constructor() : ZealotTransport {
+class MockZellijTransport @Inject constructor() : ZellijTransport {
 
     private val _connectionState = MutableStateFlow(ConnectionState.Disconnected)
     override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
     override suspend fun connect(config: ServerConfig): AppResult<Unit> {
-        Timber.d("MockZealotTransport: simulating connect to url=%s", config.url)
+        Timber.d("MockZellijTransport: simulating connect to url=%s", config.url)
         _connectionState.value = ConnectionState.Connecting
         delay(500)
         _connectionState.value = ConnectionState.Connected
@@ -39,7 +39,7 @@ class MockZealotTransport @Inject constructor() : ZealotTransport {
     }
 
     override suspend fun disconnect() {
-        Timber.d("MockZealotTransport: disconnecting")
+        Timber.d("MockZellijTransport: disconnecting")
         delay(100)
         _connectionState.value = ConnectionState.Disconnected
     }
@@ -52,13 +52,13 @@ class MockZealotTransport @Inject constructor() : ZealotTransport {
         mockPaneOutputFlow().filter { it.paneId == paneId }
 
     override suspend fun sendInput(paneId: PaneId, input: String): AppResult<Unit> {
-        Timber.d("MockZealotTransport: sendInput paneId=%s input=%s", paneId, input)
+        Timber.d("MockZellijTransport: sendInput paneId=%s input=%s", paneId, input)
         delay(50)
         return AppResult.Success(Unit)
     }
 
     override suspend fun sendCommand(paneId: PaneId, command: String): AppResult<String> {
-        Timber.d("MockZealotTransport: sendCommand paneId=%s command=%s", paneId, command)
+        Timber.d("MockZellijTransport: sendCommand paneId=%s command=%s", paneId, command)
         delay(200)
         return AppResult.Success("ok")
     }
@@ -126,12 +126,12 @@ class MockZealotTransport @Inject constructor() : ZealotTransport {
                     panes = listOf(
                         ZellijPane(
                             id = PaneId("pane-debug-1-1"),
-                            title = "gdb ./target/debug/zealot",
+                            title = "gdb ./target/debug/zellij",
                             isActive = true,
                         ),
                         ZellijPane(
                             id = PaneId("pane-debug-1-2"),
-                            title = "perf stat -- ./target/debug/zealot",
+                            title = "perf stat -- ./target/debug/zellij",
                             isActive = false,
                         ),
                     ),
@@ -143,7 +143,7 @@ class MockZealotTransport @Inject constructor() : ZealotTransport {
                     panes = listOf(
                         ZellijPane(
                             id = PaneId("pane-debug-2-1"),
-                            title = "journalctl -fu zealot.service",
+                            title = "journalctl -fu zellij.service",
                             isActive = true,
                         ),
                     ),
@@ -192,16 +192,16 @@ class MockZealotTransport @Inject constructor() : ZealotTransport {
 
     private fun mockPaneOutputFlow(): Flow<PaneOutput> = flow {
         val outputs = listOf(
-            PaneOutput(PaneId("pane-dev-1-1"), "   Compiling zealot-api v0.3.1 (~/code/zealot)\n"),
+            PaneOutput(PaneId("pane-dev-1-1"), "   Compiling zellij-api v0.3.1 (~/code/zellij)\n"),
             PaneOutput(PaneId("pane-dev-1-1"), "    Finished release [optimized] target(s) in 4.32s\n"),
-            PaneOutput(PaneId("pane-dev-1-1"), "     Running `target/release/zealot-api`\n"),
-            PaneOutput(PaneId("pane-dev-1-1"), "INFO zealot_api: listening on 0.0.0.0:7800\n"),
+            PaneOutput(PaneId("pane-dev-1-1"), "     Running `target/release/zellij-api`\n"),
+            PaneOutput(PaneId("pane-dev-1-1"), "INFO zellij_api: listening on 0.0.0.0:7800\n"),
             PaneOutput(PaneId("pane-dev-1-2"), "2026-04-01T10:15:02Z INFO  session.connected id=dev-server\n"),
             PaneOutput(PaneId("pane-dev-1-2"), "2026-04-01T10:15:05Z DEBUG pane.output pane=1 bytes=42\n"),
             PaneOutput(PaneId("pane-deploy-1-1"), "deploy@staging:~$ docker ps --format 'table {{.Names}}\\t{{.Status}}'\n"),
             PaneOutput(PaneId("pane-deploy-1-1"), "NAMES               STATUS\n"),
             PaneOutput(PaneId("pane-deploy-1-1"), "traefik             Up 3 days\n"),
-            PaneOutput(PaneId("pane-deploy-1-1"), "zealot              Up 2 hours\n"),
+            PaneOutput(PaneId("pane-deploy-1-1"), "zellij              Up 2 hours\n"),
         )
         outputs.forEach { output ->
             emit(output)

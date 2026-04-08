@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -36,8 +37,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import sh.delo.perth.feature.command.ui.CommandPhase
+import sh.delo.perth.feature.command.ui.CommandPlanView
+import sh.delo.perth.feature.command.ui.CommandViewModel
+import sh.delo.perth.feature.command.ui.ExecutionResultsView
+import sh.delo.perth.feature.voice.ui.VoiceControlPanel
 
 /**
  * Root screen for Stories 2.1 / 2.2 / 2.3.
@@ -55,8 +62,10 @@ fun TerminalScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TerminalViewModel = hiltViewModel(),
+    commandViewModel: CommandViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val commandState by commandViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(sessionId) {
@@ -116,7 +125,101 @@ fun TerminalScreen(
                 onSend = viewModel::onSendInput,
                 enabled = state.activePaneId != null,
             )
+
+            // Story 4.1 / 5.2: Voice and Command control panel
+            VoiceControlPanel(
+                activePaneId = state.activePaneId,
+                onCommandTranscript = commandViewModel::onTranscriptReceived,
+            )
         }
+    }
+
+    // Story 5.2 / 5.4: Command review and execution dialogs
+    CommandOverlays(
+        sessionId = sessionId,
+        state = commandState,
+        viewModel = commandViewModel,
+        activePaneId = state.activePaneId,
+    )
+}
+
+/**
+ * Overlay dialogs for the command flow (Story 5.2 - 5.4).
+ * These appear over the TerminalScreen when the CommandViewModel is in a review or execution phase.
+ */
+@Composable
+private fun CommandOverlays(
+    sessionId: String,
+    state: sh.delo.perth.feature.command.ui.CommandUiState,
+    viewModel: CommandViewModel,
+    activePaneId: sh.delo.perth.core.domain.model.PaneId?,
+) {
+    val phase = state.phase
+
+    when (phase) {
+        is CommandPhase.ReviewPlan -> {
+            Dialog(onDismissRequest = viewModel::resetToIdle) {
+                Surface(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    tonalElevation = 6.dp,
+                ) {
+                    CommandPlanView(
+                        plan = phase.plan,
+                        onToggleStep = viewModel::onToggleStepApproval,
+                        onApproveAll = viewModel::onApproveAll,
+                        onRejectAll = viewModel::onRejectAll,
+                        onExecute = {
+                            activePaneId?.let { paneId ->
+                                viewModel.onExecuteApproved(paneId, sessionId)
+                            }
+                        },
+                        onCancel = viewModel::resetToIdle,
+                        modifier = Modifier.padding(24.dp),
+                    )
+                }
+            }
+        }
+        is CommandPhase.ExecutionComplete -> {
+            Dialog(onDismissRequest = viewModel::resetToIdle) {
+                Surface(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    tonalElevation = 6.dp,
+                ) {
+                    ExecutionResultsView(
+                        results = phase.results,
+                        failedIndex = phase.failedIndex,
+                        onContinue = {
+                            activePaneId?.let { paneId ->
+                                viewModel.onContinueAfterFailure(paneId, sessionId)
+                            }
+                        },
+                        onDone = viewModel::resetToIdle,
+                        modifier = Modifier.padding(24.dp),
+                    )
+                }
+            }
+        }
+        is CommandPhase.Interpreting, CommandPhase.Executing -> {
+            Dialog(onDismissRequest = {}) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    tonalElevation = 6.dp,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        CircularProgressIndicator()
+                        Text(
+                            text = if (phase is CommandPhase.Interpreting) "Interpreting..." else "Executing...",
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                }
+            }
+        }
+        else -> Unit
     }
 }
 

@@ -1,6 +1,6 @@
 package sh.delo.perth.core.domain.model
 
-/** Connection configuration for a zealot server. */
+/** Connection configuration for a zellij server. */
 data class ServerConfig(
     val url: String,
     val authToken: String? = null,

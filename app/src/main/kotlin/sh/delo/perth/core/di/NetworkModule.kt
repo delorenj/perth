@@ -8,8 +8,8 @@ import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import sh.delo.perth.BuildConfig
-import sh.delo.perth.core.network.WebSocketZealotTransport
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.WebSocketZellijTransport
+import sh.delo.perth.core.network.ZellijTransport
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -20,7 +20,7 @@ abstract class NetworkModule {
 
     @Binds
     @Singleton
-    abstract fun bindZealotTransport(impl: WebSocketZealotTransport): ZealotTransport
+    abstract fun bindZellijTransport(impl: WebSocketZellijTransport): ZellijTransport
 
     companion object {
 

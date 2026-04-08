@@ -22,7 +22,7 @@ This document provides the complete epic and story breakdown for Perth, decompos
 
 ### Functional Requirements
 
-- FR1: Perth must connect to a configured zealot server and persist the connection details securely.
+- FR1: Perth must connect to a configured zellij server and persist the connection details securely.
 - FR2: Perth must fetch and display available Zellij sessions and allow the user to open one.
 - FR3: Perth must represent tabs as mobile screens and allow swipe navigation across tabs and panes.
 - FR4: Perth must clearly indicate the active pane and target all voice/text actions to that pane.
@@ -60,7 +60,7 @@ This document provides the complete epic and story breakdown for Perth, decompos
 - AR1: Architecture specifies Android Studio Compose Activity as starter template. Epic 1 Story 1 must scaffold the project.
 - AR2: Hilt dependency injection must be set up in the project foundation.
 - AR3: Navigation Compose with type-safe routes must be configured.
-- AR4: ZealotTransport interface must be defined with MockZealotTransport for development.
+- AR4: ZellijTransport interface must be defined with MockZellijTransport for development.
 - AR5: AppResult<T> sealed class must be used for all async operation returns.
 - AR6: Room database, DataStore, and EncryptedSharedPreferences must be configured for local storage.
 - AR7: Hybrid voice stack: ML Kit GenAI Speech (primary, on-device) + OpenAI Whisper API (fallback, cloud).
@@ -93,7 +93,7 @@ No UX Design document was produced for Perth MVP. UX patterns are defined inline
 ## Epic List
 
 ### Epic 1: Connect and Browse Sessions
-Users can connect to a zealot server, browse available Zellij sessions, select a session to open, and reconnect after network drops. This is the foundation that all other epics build upon.
+Users can connect to a zellij server, browse available Zellij sessions, select a session to open, and reconnect after network drops. This is the foundation that all other epics build upon.
 **FRs covered:** FR1, FR2, FR13, FR14, FR15
 
 ### Epic 2: Navigate Terminal and Type Input
@@ -120,7 +120,7 @@ The app shows clear, actionable error messages for connection failures, voice ca
 
 ## Epic 1: Connect and Browse Sessions
 
-Users can connect to a zealot server, browse available Zellij sessions, select a session to open, and reconnect after network drops. This epic establishes the project foundation, transport layer, and session management that all subsequent epics depend on.
+Users can connect to a zellij server, browse available Zellij sessions, select a session to open, and reconnect after network drops. This epic establishes the project foundation, transport layer, and session management that all subsequent epics depend on.
 
 ### Story 1.1: Scaffold Project and Core Infrastructure
 
@@ -137,17 +137,17 @@ So that all subsequent stories have a consistent foundation to build on.
 **And** Navigation Compose is set up with a PerthNavHost and placeholder routes for SessionList, Terminal, and Settings
 **And** the feature-based package structure matches the architecture document (`core/`, `feature/session/`, `feature/terminal/`, `feature/voice/`, `feature/command/`, `feature/settings/`)
 **And** `AppResult<T>` and `AppException` sealed classes are defined in `core/result/`
-**And** `ZealotTransport` interface is defined in `core/network/`
-**And** `MockZealotTransport` returns hardcoded session data for development
+**And** `ZellijTransport` interface is defined in `core/network/`
+**And** `MockZellijTransport` returns hardcoded session data for development
 **And** Room database, DataStore, and EncryptedSharedPreferences are configured in `core/data/`
 **And** Timber is configured for structured logging
 **And** the version catalog (`libs.versions.toml`) lists all dependencies with pinned versions
 **And** a basic CI workflow (`ci.yml`) runs `./gradlew build` on push
 
-### Story 1.2: Connect to Zealot Server
+### Story 1.2: Connect to Zellij Server
 
 As a power user,
-I want to enter my zealot server URL and connect to it,
+I want to enter my zellij server URL and connect to it,
 So that I can access my Zellij sessions remotely from my phone.
 
 **Acceptance Criteria:**
@@ -169,7 +169,7 @@ So that I can resume work on a specific session from my phone.
 
 **Acceptance Criteria:**
 
-**Given** the app is connected to a zealot server
+**Given** the app is connected to a zellij server
 **When** the Session List screen loads
 **Then** all available Zellij sessions are displayed with their names
 **And** each session shows a summary (number of tabs, creation time if available)
@@ -205,7 +205,7 @@ So that I can customize Perth to my workflow.
 
 **Given** the app is open
 **When** I navigate to the Settings screen
-**Then** I can view and edit the zealot server URL
+**Then** I can view and edit the zellij server URL
 **And** I can view the current connection status
 **And** I can select the preferred voice provider (on-device or cloud)
 **And** I can view recent sessions stored locally
@@ -252,7 +252,7 @@ So that I know where my voice and text input will be directed.
 **And** tapping a pane makes it the active pane
 **And** the active pane ID is tracked in `TerminalViewModel` state
 **And** all voice and text actions target the active pane
-**And** pane output updates are received via the `paneOutputFlow` from `ZealotTransport`
+**And** pane output updates are received via the `paneOutputFlow` from `ZellijTransport`
 **And** for single-pane tabs, that pane is automatically active with no selection needed
 
 ### Story 2.3: Typed Input to Active Pane
@@ -267,7 +267,7 @@ So that I can interact with the terminal when voice input is inconvenient.
 **When** I tap the input area at the bottom of the screen
 **Then** the on-screen keyboard appears
 **And** text I type is visible in the input field
-**And** pressing Enter sends the text to the active pane via `ZealotTransport.sendInput()`
+**And** pressing Enter sends the text to the active pane via `ZellijTransport.sendInput()`
 **And** the input field clears after sending
 **And** the sent text appears in the pane output (echoed by the terminal)
 **And** the input field supports standard keyboard features (autocorrect can be toggled off in settings)
@@ -347,7 +347,7 @@ So that I can control the terminal by voice without typing.
 
 **Given** a transcription result is displayed in the preview area
 **When** I tap the Send button
-**Then** the transcribed text is sent to the active pane via `ZealotTransport.sendInput()`
+**Then** the transcribed text is sent to the active pane via `ZellijTransport.sendInput()`
 **And** the preview area clears
 **And** the text appears in the pane output (echoed by the terminal)
 **And** I can edit the transcription in the preview area before sending
@@ -373,7 +373,7 @@ So that I can quickly capture tasks without typing on my phone.
 **Then** the audio is transcribed verbatim using the same speech recognizer as Transcription mode
 **And** the transcribed text is displayed in a preview area
 **And** a confirmation dialog shows: "Write this to task.md in the active pane?"
-**And** if I confirm, the text is sent as a command to write `task.md` via `ZealotTransport.sendCommand()`
+**And** if I confirm, the text is sent as a command to write `task.md` via `ZellijTransport.sendCommand()`
 **And** the command uses a safe write operation (e.g., `cat > task.md << 'EOF'\n{text}\nEOF`)
 **And** if a `task.md` already exists, the user is warned and can choose to overwrite or append
 **And** on success, a confirmation message is shown
@@ -449,7 +449,7 @@ So that I can accomplish terminal tasks by voice.
 
 **Given** a command plan has been approved (partially or fully)
 **When** I tap Execute
-**Then** approved commands are sent sequentially to the active pane via `ZealotTransport.sendCommand()`
+**Then** approved commands are sent sequentially to the active pane via `ZellijTransport.sendCommand()`
 **And** the result of each command is shown (success or failure)
 **And** if a command fails, execution stops and the user is asked whether to continue with remaining commands
 **And** every command attempt is logged in the Room audit table with: timestamp, original transcript, command text, safety classification, user decision (approved/rejected), and execution result

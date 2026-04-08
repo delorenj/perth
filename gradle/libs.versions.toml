@@ -1,8 +1,8 @@
 [versions]
 # Core
-agp = "8.7.3"
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.28"
+agp = "9.1.0"
+kotlin = "2.2.10"
+ksp = "2.3.2"
 kotlinxSerializationJson = "1.7.3"
 
 # AndroidX Core

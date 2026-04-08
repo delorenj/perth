@@ -5,7 +5,7 @@
 **Project Level:** **3** (Complex Mobile Integration: Android + Voice AI + LLM + Server Protocol)  
 **Source:** braindump.md
 
-> ⚠️ **Oracle Review Findings**: Level 3 assessment based on scope (Android client, server protocol, voice capture, transcription, LLM-driven command execution, multi-mode UX). Reassess once zealot protocol is proven.
+> ⚠️ **Oracle Review Findings**: Level 3 assessment based on scope (Android client, server protocol, voice capture, transcription, LLM-driven command execution, multi-mode UX). Reassess once zellij protocol is proven.
 
 ---
 
@@ -13,7 +13,7 @@
 
 Perth is a mobile Zellij client with voice-driven interface. Based on the braindump, this project requires:
 - Android mobile app
-- Zellij server (zealot) connectivity
+- Zellij server (zellij) connectivity
 - Three voice interaction modes (Command, Transcription, Task)
 - Swipe-based navigation between tabs/panes
 - Live terminal state sync and input transport
@@ -117,12 +117,12 @@ Perth is a mobile Zellij client with voice-driven interface. Based on the braind
 | Workflow | Purpose | Output |
 |----------|---------|--------|
 | `brainstorming` | Explore alternative UX approaches for voice interaction | Session notes |
-| `research` | Investigate zealot API, voice tech, mobile frameworks | `docs/research-perth-*.md` |
+| `research` | Investigate zellij API, voice tech, mobile frameworks | `docs/research-perth-*.md` |
 | `create-product-brief` | Define product vision, target user, core value | `docs/product-brief-perth-*.md` |
 
 ### Research Focus Areas (REQUIRED)
 
-1. **Zealot Server Protocol**
+1. **Zellij Server Protocol**
    - WebSocket vs REST API
    - Authentication flow
    - Session/tab/pane state sync
@@ -169,7 +169,7 @@ Perth is a mobile Zellij client with voice-driven interface. Based on the braind
 
 ```
 epic-perth-foundation.md    # Session Sync & Terminal Transport
-├── story: zealot server connection & authentication
+├── story: zellij server connection & authentication
 ├── story: session list retrieval
 ├── story: tab/pane state sync (live updates)
 ├── story: terminal output rendering
@@ -228,7 +228,7 @@ epic-perth-android.md       # Android-specific Concerns
 
 epic-perth-testing.md       # Test Infrastructure
 ├── story: unit tests (JVM + Android)
-├── story: integration tests (mock zealot)
+├── story: integration tests (mock zellij)
 ├── story: E2E tests (Espresso for Android)
 └── story: voice interaction tests
 ```
@@ -248,13 +248,13 @@ epic-perth-testing.md       # Test Infrastructure
 ### Implementation Readiness Checklist
 
 - [ ] PRD covers all 3 voice modes with explicit verbatim requirements
-- [ ] Architecture addresses zealot server contract
+- [ ] Architecture addresses zellij server contract
 - [ ] Foundation epic covers terminal sync & input transport
 - [ ] Command mode safety/confirmation requirements documented
 - [ ] Android permissions and audio lifecycle planned
 
 ### Key Decisions Needed
-- [ ] Authentication flow for zealot server
+- [ ] Authentication flow for zellij server
 - [ ] Voice mode switching UI (how to select mode)
 - [ ] Error handling strategy (offline, API failures, LLM failures)
 - [ ] Command confirmation boundaries (what requires user approval)
@@ -267,7 +267,7 @@ epic-perth-testing.md       # Test Infrastructure
 - Rollback/undo strategy for destructive commands
 - Audit trail for executed commands
 
-#### Zealot Server Contract
+#### Zellij Server Contract
 - Is the API documented? Or is this also a design task?
 - Real-time state sync mechanism
 - Authentication tokens, session management
@@ -349,7 +349,7 @@ epic-perth-testing.md       # Test Infrastructure
 
 ```
 1. /research
-   └─→ Investigate zealot API, voice stack, mobile framework
+   └─→ Investigate zellij API, voice stack, mobile framework
    
 2. /brainstorming
    └─→ Explore voice UX approaches
@@ -365,7 +365,7 @@ epic-perth-testing.md       # Test Infrastructure
    └─→ Plan mobile UI patterns (UX FROM PRD)
    
 6. /create-architecture  ← REQUIRED for level 3
-   └─→ System design (zealot contract, voice stack, LLM)
+   └─→ System design (zellij contract, voice stack, LLM)
    
 7. /check-implementation-readiness  ← CRITICAL GATE
    └─→ Validate PRD + Architecture alignment
@@ -405,7 +405,7 @@ After completing planning, create Plane tickets for each epic:
 ## Notes
 
 - **Use custom `ticket-lifecycle` workflow** from `_bmad/custom/workflows/ticket-lifecycle/` for ticket management
-- **Phase 1 is REQUIRED for Level 3** - Perth needs deep research into zealot protocol, voice stack, and mobile framework
+- **Phase 1 is REQUIRED for Level 3** - Perth needs deep research into zellij protocol, voice stack, and mobile framework
 - **Architecture is REQUIRED** (level 3) - don't skip
 - **check-implementation-readiness is CRITICAL GATE** - don't proceed to solutioning without passing
 - **testarch-* workflows** run in parallel with implementation

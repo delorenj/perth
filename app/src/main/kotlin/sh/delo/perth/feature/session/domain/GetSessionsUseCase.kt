@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 /**
  * Returns a [Flow] of the current live session list from the transport layer.
- * Emits whenever the zealot server pushes an updated session list.
+ * Emits whenever the zellij server pushes an updated session list.
  */
 class GetSessionsUseCase @Inject constructor(
     private val sessionRepository: SessionRepository,

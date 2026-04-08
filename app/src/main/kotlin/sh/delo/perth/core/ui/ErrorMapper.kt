@@ -45,7 +45,7 @@ object ErrorMapper {
 
     private fun mapServer(e: AppException.Server): ErrorPresentation {
         val message = when (e.code) {
-            in 500..599 -> "Server error (${e.code}). The zealot server returned an unexpected response."
+            in 500..599 -> "Server error (${e.code}). The zellij server returned an unexpected response."
             in 400..499 -> "Request error (${e.code}). The server rejected the last command."
             else -> "Server error (${e.code}). Try reconnecting."
         }

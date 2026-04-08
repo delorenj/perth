@@ -5,7 +5,7 @@
     <!-- Session list -->
     <string name="session_list_title">Perth</string>
     <string name="session_list_empty">No sessions</string>
-    <string name="session_list_empty_hint">Connect a zealot server in Settings</string>
+    <string name="session_list_empty_hint">Connect a zellij server in Settings</string>
     <string name="session_list_refresh">Refresh sessions</string>
     <string name="session_list_settings">Settings</string>
     <string name="session_tabs_count">%d tab</string>
@@ -19,7 +19,7 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_server_section">Zealot Server</string>
+    <string name="settings_server_section">Zellij Server</string>
     <string name="settings_server_url_label">Server URL</string>
     <string name="settings_server_url_placeholder">http://192.168.1.100:7800</string>
     <string name="settings_server_save">Save Server URL</string>

@@ -1,5 +1,6 @@
 package sh.delo.perth.core.network
 
+import android.util.Base64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -22,20 +25,23 @@ import sh.delo.perth.core.domain.model.PaneId
 import sh.delo.perth.core.domain.model.PaneOutput
 import sh.delo.perth.core.domain.model.ServerConfig
 import sh.delo.perth.core.domain.model.ZellijSession
+import sh.delo.perth.core.domain.model.ZellijTab
 import sh.delo.perth.core.result.AppException
 import sh.delo.perth.core.result.AppResult
 import timber.log.Timber
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class WebSocketZealotTransport @Inject constructor(
+class WebSocketZellijTransport @Inject constructor(
     private val okHttpClient: OkHttpClient,
-) : ZealotTransport {
+) : ZellijTransport {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val json = Json { ignoreUnknownKeys = true }
 
     private val _connectionState = MutableStateFlow(ConnectionState.Disconnected)
     override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
@@ -43,7 +49,6 @@ class WebSocketZealotTransport @Inject constructor(
     private val _sessionFlow = MutableSharedFlow<List<ZellijSession>>(replay = 1)
     private val _paneOutputFlow = MutableSharedFlow<PaneOutput>(extraBufferCapacity = 256)
 
-    // Last known session list used to cache state during disconnection (Story 1.4)
     private var lastKnownSessions: List<ZellijSession> = emptyList()
 
     private var webSocket: WebSocket? = null
@@ -60,7 +65,7 @@ class WebSocketZealotTransport @Inject constructor(
     private fun doConnect(config: ServerConfig): AppResult<Unit> {
         return try {
             _connectionState.value = ConnectionState.Connecting
-            Timber.d("Connecting to zealot: url=%s", config.wsUrl)
+            Timber.d("Connecting to zellij: url=%s", config.wsUrl)
             val request = Request.Builder()
                 .url("${config.wsUrl}/ws")
                 .apply { config.authToken?.let { addHeader("Authorization", "Bearer $it") } }
@@ -69,13 +74,13 @@ class WebSocketZealotTransport @Inject constructor(
             AppResult.Success(Unit)
         } catch (e: Exception) {
             _connectionState.value = ConnectionState.Error
-            Timber.e(e, "Failed to connect to zealot server")
+            Timber.e(e, "Failed to connect to zellij server")
             AppResult.Error(AppException.Network("Connection failed: ${e.message}", e))
         }
     }
 
     override suspend fun disconnect() {
-        Timber.d("Disconnecting from zealot server")
+        Timber.d("Disconnecting from zellij server")
         reconnectJob?.cancel()
         reconnectJob = null
         reconnectAttempts.set(0)
@@ -91,11 +96,11 @@ class WebSocketZealotTransport @Inject constructor(
 
     override suspend fun sendInput(paneId: PaneId, input: String): AppResult<Unit> {
         val ws = webSocket ?: return AppResult.Error(
-            AppException.Network("Not connected to zealot server")
+            AppException.Network("Not connected to zellij server")
         )
         return try {
-            val message = """{"type":"pane.input","pane_id":"${paneId.value}","input":"$input"}"""
-            ws.send(message)
+            val message = PerthMessage.PaneInput(pane_id = paneId.value, input = input)
+            ws.send(json.encodeToString(message))
             AppResult.Success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "Failed to send input: paneId=%s", paneId)
@@ -105,11 +110,11 @@ class WebSocketZealotTransport @Inject constructor(
 
     override suspend fun sendCommand(paneId: PaneId, command: String): AppResult<String> {
         val ws = webSocket ?: return AppResult.Error(
-            AppException.Network("Not connected to zealot server")
+            AppException.Network("Not connected to zellij server")
         )
         return try {
-            val message = """{"type":"pane.command","pane_id":"${paneId.value}","command":"$command"}"""
-            ws.send(message)
+            val message = PerthMessage.PaneCommand(pane_id = paneId.value, command = command)
+            ws.send(json.encodeToString(message))
             AppResult.Success("command_sent")
         } catch (e: Exception) {
             Timber.e(e, "Failed to send command: paneId=%s command=%s", paneId, command)
@@ -117,12 +122,6 @@ class WebSocketZealotTransport @Inject constructor(
         }
     }
 
-    /**
-     * Schedules an automatic reconnect attempt with exponential backoff.
-     * Attempts: 1s delay, 2s delay, 4s delay — max [MAX_RECONNECT_ATTEMPTS] total.
-     * After exhausting attempts the connection state is set to [ConnectionState.Error]
-     * and no further automatic retries occur; the user must reconnect manually.
-     */
     private fun scheduleReconnect() {
         val config = lastConfig ?: return
         val attempt = reconnectAttempts.incrementAndGet()
@@ -132,13 +131,10 @@ class WebSocketZealotTransport @Inject constructor(
             return
         }
 
-        val delayMs = RECONNECT_BASE_DELAY_MS * (1 shl (attempt - 1)) // 1s, 2s, 4s
-        Timber.d("Scheduling reconnect attempt %d in %dms", attempt, delayMs)
-
+        val delayMs = RECONNECT_BASE_DELAY_MS * (1 shl (attempt - 1))
         reconnectJob?.cancel()
         reconnectJob = scope.launch {
             delay(delayMs)
-            Timber.d("Reconnecting (attempt %d)...", attempt)
             doConnect(config)
         }
     }
@@ -150,31 +146,58 @@ class WebSocketZealotTransport @Inject constructor(
             reconnectJob?.cancel()
             reconnectJob = null
             _connectionState.value = ConnectionState.Connected
-            // Re-emit cached sessions so observers immediately have data after reconnect
-            if (lastKnownSessions.isNotEmpty()) {
-                scope.launch { _sessionFlow.emit(lastKnownSessions) }
-            }
+
+            // Request session list on connect
+            webSocket.send(json.encodeToString<PerthMessage>(PerthMessage.SessionList))
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
-            // TODO: Parse zealot protocol messages and emit to appropriate flows
-            Timber.d("WebSocket message received: length=%d", text.length)
+            try {
+                val message = json.decodeFromString<PerthMessage>(text)
+                handlePerthMessage(message)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to parse message: %s", text)
+            }
+        }
+
+        private fun handlePerthMessage(message: PerthMessage) {
+            when (message) {
+                is PerthMessage.SessionListUpdate -> {
+                    val sessions = message.sessions.map { info ->
+                        ZellijSession(
+                            id = info.name,
+                            name = info.name,
+                            tabs = emptyList(), // Bridge doesn't send tabs yet
+                            createdAt = Instant.now()
+                        )
+                    }
+                    lastKnownSessions = sessions
+                    scope.launch { _sessionFlow.emit(sessions) }
+                }
+                is PerthMessage.PaneOutputMessage -> {
+                    val decoded = Base64.decode(message.data, Base64.DEFAULT)
+                    val output = PaneOutput(
+                        paneId = PaneId(message.pane_id),
+                        text = String(decoded, Charsets.UTF_8)
+                    )
+                    scope.launch { _paneOutputFlow.emit(output) }
+                }
+                is PerthMessage.Error -> {
+                    Timber.e("Server error: %s", message.message)
+                }
+                else -> { /* Ignore other types */ }
+            }
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            Timber.e(t, "WebSocket failure: code=%s", response?.code)
+            Timber.e(t, "WebSocket failure")
             _connectionState.value = ConnectionState.Disconnected
             scheduleReconnect()
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-            Timber.d("WebSocket closed: code=%d reason=%s", code, reason)
-            if (code != NORMAL_CLOSURE_CODE) {
-                _connectionState.value = ConnectionState.Disconnected
-                scheduleReconnect()
-            } else {
-                _connectionState.value = ConnectionState.Disconnected
-            }
+            _connectionState.value = ConnectionState.Disconnected
+            if (code != NORMAL_CLOSURE_CODE) scheduleReconnect()
         }
     }
 
@@ -185,10 +208,9 @@ class WebSocketZealotTransport @Inject constructor(
     }
 }
 
-/** Extension to create a configured OkHttpClient for zealot WebSocket connections. */
-fun zealotOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+fun zellijOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
     .connectTimeout(30, TimeUnit.SECONDS)
-    .readTimeout(0, TimeUnit.MILLISECONDS) // No read timeout for WebSocket
+    .readTimeout(0, TimeUnit.MILLISECONDS)
     .writeTimeout(30, TimeUnit.SECONDS)
     .pingInterval(30, TimeUnit.SECONDS)
     .build()

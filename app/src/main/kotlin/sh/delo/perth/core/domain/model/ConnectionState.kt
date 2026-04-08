@@ -1,6 +1,6 @@
 package sh.delo.perth.core.domain.model
 
-/** Represents the current connection state to the zealot server. */
+/** Represents the current connection state to the zellij server. */
 enum class ConnectionState {
     /** Successfully connected and receiving data. */
     Connected,

@@ -1,7 +1,7 @@
 package sh.delo.perth.feature.voice.domain
 
 import sh.delo.perth.core.domain.model.PaneId
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.core.result.AppException
 import sh.delo.perth.core.result.AppResult
 import sh.delo.perth.core.result.runCatchingAppResult
@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 /**
  * Writes transcription text to `task.md` in the active pane by sending a safe
- * heredoc shell command via [ZealotTransport.sendCommand].
+ * heredoc shell command via [ZellijTransport.sendCommand].
  *
  * The heredoc form `cat > task.md << 'EOF' ... EOF` is used so that:
  * - Single quotes inside the text do not need escaping (the delimiter `'EOF'`
@@ -24,7 +24,7 @@ import javax.inject.Inject
  * @param append When true the command uses `>>` (append) instead of `>` (overwrite).
  */
 class WriteTaskUseCase @Inject constructor(
-    private val transport: ZealotTransport,
+    private val transport: ZellijTransport,
 ) {
     /**
      * Sends the write command to [paneId].

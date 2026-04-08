@@ -73,6 +73,7 @@ import sh.delo.perth.core.ui.ErrorMapper
 @Composable
 fun VoiceControlPanel(
     activePaneId: PaneId?,
+    onCommandTranscript: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: VoiceViewModel = hiltViewModel(),
 ) {
@@ -212,7 +213,7 @@ fun VoiceControlPanel(
                             if (state.showTaskConfirmRow) {
                                 viewModel.onRequestWriteTask()
                             } else {
-                                viewModel.onSend(activePaneId)
+                                viewModel.onSend(activePaneId, onCommandTranscript)
                             }
                         },
                         onCancel = viewModel::onCancel,

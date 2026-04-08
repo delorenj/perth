@@ -100,7 +100,7 @@ object TestData {
 
     val PANE_OUTPUT_LINES = listOf(
         paneOutput(PANE_ID_1, "cargo build --release\n"),
-        paneOutput(PANE_ID_1, "   Compiling zealot v0.3.1\n"),
+        paneOutput(PANE_ID_1, "   Compiling zellij v0.3.1\n"),
         paneOutput(PANE_ID_1, "    Finished release [optimized]\n"),
     )
 
@@ -114,7 +114,7 @@ object TestData {
     )
 
     val SERVER_CONFIG_WITH_TOKEN = ServerConfig(
-        url = "https://zealot.delo.sh",
+        url = "https://zellij.delo.sh",
         authToken = "test-token-abc123",
     )
 

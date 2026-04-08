@@ -232,7 +232,7 @@ private fun EmptyContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = "Connect a zealot server in Settings",
+                text = "Connect a zellij server in Settings",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
             )

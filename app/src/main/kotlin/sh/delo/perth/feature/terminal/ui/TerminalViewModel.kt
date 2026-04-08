@@ -15,7 +15,7 @@ import sh.delo.perth.core.domain.model.PaneId
 import sh.delo.perth.core.domain.model.ZellijTab
 import sh.delo.perth.core.domain.repository.SessionRepository
 import sh.delo.perth.core.domain.repository.SettingsRepository
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.feature.terminal.domain.NavigatePaneUseCase
 import sh.delo.perth.feature.terminal.domain.SendInputUseCase
 import timber.log.Timber
@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TerminalViewModel @Inject constructor(
-    private val transport: ZealotTransport,
+    private val transport: ZellijTransport,
     private val sessionRepository: SessionRepository,
     private val settingsRepository: SettingsRepository,
     private val navigatePaneUseCase: NavigatePaneUseCase,
@@ -134,7 +134,7 @@ class TerminalViewModel @Inject constructor(
                 _state.update { current ->
                     current.copy(
                         connectionState = connectionState,
-                        // WebSocketZealotTransport is reconnecting when it transitions to
+                        // WebSocketZellijTransport is reconnecting when it transitions to
                         // Connecting from a previously-connected state.
                         isReconnecting = connectionState == ConnectionState.Connecting &&
                             current.connectionState != ConnectionState.Disconnected,

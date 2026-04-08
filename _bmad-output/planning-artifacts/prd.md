@@ -14,7 +14,7 @@ inputDocuments:
 
 ## Product Summary
 
-Perth is a voice-driven Android client for Zellij sessions. It connects to a zealot server, lets the user browse sessions, tabs, and panes on mobile, and supports three voice interaction modes: command mode, transcription mode, and task mode.
+Perth is a voice-driven Android client for Zellij sessions. It connects to a zellij server, lets the user browse sessions, tabs, and panes on mobile, and supports three voice interaction modes: command mode, transcription mode, and task mode.
 
 The app is designed for hands-free terminal interaction when typing is inconvenient, while still preserving a typed fallback for direct input.
 
@@ -24,7 +24,7 @@ Terminal workflows are fast on desktop but awkward on mobile. Perth solves this 
 
 ## Goals
 
-- Connect to a zealot-backed Zellij session from Android
+- Connect to a zellij-backed Zellij session from Android
 - Show sessions, tabs, and panes clearly on mobile
 - Support swipe-based navigation between tabs and panes
 - Provide three voice modes: command, transcription, and task
@@ -62,7 +62,7 @@ Needs quick access to a specific session, tab, or pane from a phone.
 
 ### 1. Connect and Resume a Session
 1. Open Perth
-2. Connect to the zealot server
+2. Connect to the zellij server
 3. View available sessions
 4. Select a session
 5. Resume the active tabs and panes
@@ -95,7 +95,7 @@ Needs quick access to a specific session, tab, or pane from a phone.
 ## Functional Requirements
 
 ### FR1 - Server Connection
-Perth must connect to a configured zealot server and persist the connection details securely.
+Perth must connect to a configured zellij server and persist the connection details securely.
 
 ### FR2 - Session Browser
 Perth must fetch and display available Zellij sessions and allow the user to open one.
@@ -224,7 +224,7 @@ Perth must store recent sessions, preferences, and safe metadata locally.
 ## Epics
 
 ### Epic 1 - Foundation and Session Sync
-- Connect to zealot
+- Connect to zellij
 - Sync sessions, tabs, and panes
 - Maintain active pane state
 
@@ -261,7 +261,7 @@ Perth must store recent sessions, preferences, and safe metadata locally.
 
 ## Key Risks and Open Questions
 
-1. What is the exact zealot server contract?
+1. What is the exact zellij server contract?
 2. Does Zellij control require a local bridge or daemon?
 3. What is the safest command approval policy for MVP?
 4. Which speech provider will be primary at launch?
@@ -280,4 +280,4 @@ Perth must store recent sessions, preferences, and safe metadata locally.
 
 ## Recommendation
 
-Proceed with architecture after this PRD. The first architecture decision to resolve is the zealot transport contract, because it determines the session sync layer and command execution path.
+Proceed with architecture after this PRD. The first architecture decision to resolve is the zellij transport contract, because it determines the session sync layer and command execution path.

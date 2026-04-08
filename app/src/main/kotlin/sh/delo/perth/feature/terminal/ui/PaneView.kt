@@ -31,6 +31,7 @@ import sh.delo.perth.core.domain.model.PaneId
 import sh.delo.perth.core.domain.model.PaneOutput
 import sh.delo.perth.core.domain.model.ZellijPane
 import sh.delo.perth.core.domain.model.ZellijTab
+import sh.delo.perth.core.ui.AnsiParser
 
 private val PANE_CORNER = RoundedCornerShape(4.dp)
 
@@ -157,10 +158,12 @@ fun PaneView(
             ) {
                 items(outputs, key = { it.timestamp.toEpochMilli() }) { output ->
                     Text(
-                        text = output.text,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        text = AnsiParser.parse(output.text),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp,
+                            lineHeight = 14.sp,
+                        ),
                         fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurface,
                         softWrap = false,
                     )
                 }

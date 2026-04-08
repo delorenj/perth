@@ -9,8 +9,8 @@ import sh.delo.perth.core.domain.model.ServerConfig
 import sh.delo.perth.core.domain.model.ZellijSession
 import sh.delo.perth.core.result.AppResult
 
-/** Abstracts the transport layer between Perth and the zealot server. */
-interface ZealotTransport {
+/** Abstracts the transport layer between Perth and the zellij server. */
+interface ZellijTransport {
 
     /** The current connection state as a hot stream. */
     val connectionState: StateFlow<ConnectionState>

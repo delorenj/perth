@@ -5,7 +5,7 @@ workflowType: 'research'
 lastStep: 4
 research_type: 'technical'
 research_topic: 'Perth - Voice-driven Mobile Zellij Client'
-research_goals: 'Investigate zealot server API, voice recognition stack, mobile framework options, and LLM integration approaches for Android app development'
+research_goals: 'Investigate zellij server API, voice recognition stack, mobile framework options, and LLM integration approaches for Android app development'
 user_name: 'Jarad'
 date: '2026-03-29'
 web_research_enabled: true
@@ -29,7 +29,7 @@ source_verification: true
 ## Technical Research Scope Confirmation
 
 **Research Topic:** Perth - Voice-driven Mobile Zellij Client
-**Research Goals:** Investigate zealot server API, voice recognition stack, mobile framework options, and LLM integration approaches for Android app development
+**Research Goals:** Investigate zellij server API, voice recognition stack, mobile framework options, and LLM integration approaches for Android app development
 
 **Technical Research Scope:**
 
@@ -66,7 +66,7 @@ _Key Characteristics:_
 - Extension functions enable clean Compose integration
 - 100% interoperable with Java
 
-_For Perth:_ Kotlin is the clear choice. Coroutines are essential for handling WebSocket connections to zealot server and voice processing pipelines.
+_For Perth:_ Kotlin is the clear choice. Coroutines are essential for handling WebSocket connections to zellij server and voice processing pipelines.
 
 _Source:_ [Bitcot - Native Android Development with Jetpack Compose and Kotlin 2026](https://www.bitcot.com/native-android-development-with-jetpack-compose-and-kotlin/), [Technotalkative - Modern Android Development 2026](https://technotalkative.com/modern-android-development-guide/)
 
@@ -119,7 +119,7 @@ _Zellij Components:_
 - **Programmatic Control** - API for external control
 - **IPC (Inter-Process Communication)** - Client-server communication via Rust IPC
 
-_For Perth:_ Need to investigate whether zealot (the Zellij session server) exposes a WebSocket or HTTP API. The Zellij IPC is Rust-based, so a Kotlin wrapper would need to be built.
+_For Perth:_ Need to investigate whether zellij (the Zellij session server) exposes a WebSocket or HTTP API. The Zellij IPC is Rust-based, so a Kotlin wrapper would need to be built.
 
 _Source:_ [Zellij Plugin API Documentation](https://zellij.dev/documentation/plugin-api.html), [Zellij Programmatic Control](https://zellij.dev/documentation/programmatic-control.html), [Zellij IPC Source](https://docs.rs/zellij-utils/latest/src/zellij_utils/ipc.rs.html), [Zellij Plugin Development Guide](https://dasroot.net/posts/2026/03/developing-plugins-for-zellij-comprehensive-guide/)
 
@@ -216,7 +216,7 @@ _Source:_ [Jetpack Compose 2026 Guide](https://technotalkative.com/modern-androi
 | Voice (Primary) | Google ML Kit GenAI Speech | Medium |
 | Voice (Fallback) | OpenAI Whisper API | High |
 | Local Voice | Whisper Android | Medium |
-| Server Comm | WebSocket/HTTP (investigate zealot) | Low |
+| Server Comm | WebSocket/HTTP (investigate zellij) | Low |
 | Local Storage | Room + DataStore | High |
 | Secure Storage | EncryptedSharedPreferences | High |
 | Testing | JUnit + MockK + Espresso | High |
@@ -225,7 +225,7 @@ _Source:_ [Jetpack Compose 2026 Guide](https://technotalkative.com/modern-androi
 ---
 
 **Key Research Gaps Identified:**
-1. ⚠️ Zealot server API contract - is there a documented API?
+1. ⚠️ Zellij server API contract - is there a documented API?
 2. ⚠️ Zellij IPC protocol - how to communicate from Kotlin to Rust IPC?
 3. ⚠️ Real-time session sync mechanism - WebSocket or polling?
 4. ⚠️ Command execution security - how to send commands safely?
@@ -241,7 +241,7 @@ Perth should use a **layered, state-driven Android architecture**:
 - **Presentation layer**: Jetpack Compose screens and navigation
 - **State layer**: ViewModel + StateFlow as the source of truth
 - **Domain layer**: use-cases for session selection, mode switching, transcription, and command execution
-- **Data layer**: repositories/adapters for zealot, voice recognition, local cache, and LLM providers
+- **Data layer**: repositories/adapters for zellij, voice recognition, local cache, and LLM providers
 
 Compose is explicitly state-driven and immutable at the UI level, so Perth should hoist state into ViewModels and keep composables focused on rendering and event emission. Save/restore UI state with Compose state APIs where needed.
 
@@ -251,7 +251,7 @@ _Source:_ [Compose UI Architecture](https://developer.android.com/develop/ui/com
 
 - **Unidirectional data flow**: user action → ViewModel/use-case → state update → UI recomposition
 - **Single source of truth**: session state, active pane, and active voice mode should each have one authoritative owner
-- **Adapter boundary for zealot**: isolate the server contract behind an interface so the app can swap between WebSocket, HTTP, CLI bridge, or local daemon later
+- **Adapter boundary for zellij**: isolate the server contract behind an interface so the app can swap between WebSocket, HTTP, CLI bridge, or local daemon later
 - **Command safety gate**: command mode should never execute destructive actions without explicit confirmation
 - **Ephemeral audio handling**: keep audio buffers short-lived unless user explicitly saves them
 
@@ -260,7 +260,7 @@ _Source:_ [Compose UI Architecture](https://developer.android.com/develop/ui/com
 ### Scalability and Performance Patterns
 
 - Use **coroutines + structured concurrency** for voice capture, transcription, and network I/O
-- Prefer a **persistent live channel** for session state if zealot supports it; fall back to polling/delta sync only if needed
+- Prefer a **persistent live channel** for session state if zellij supports it; fall back to polling/delta sync only if needed
 - Cache recent session snapshots locally to reduce redraws and reconnect churn
 - Keep terminal rendering incremental rather than reloading full panes when possible
 
@@ -268,10 +268,10 @@ _Source:_ [Compose UI Architecture](https://developer.android.com/develop/ui/com
 
 ### Integration and Communication Patterns
 
-Zellij already exposes **programmatic control** and CLI-based control paths, so Perth should treat zealot integration as a transport problem first, not a UI problem. A small gateway layer can normalize whichever protocol becomes available:
+Zellij already exposes **programmatic control** and CLI-based control paths, so Perth should treat zellij integration as a transport problem first, not a UI problem. A small gateway layer can normalize whichever protocol becomes available:
 
-- **If zealot exposes an API**: use a transport adapter (likely HTTP/WebSocket)
-- **If zealot is CLI-driven**: use a local bridge/daemon and invoke Zellij control commands
+- **If zellij exposes an API**: use a transport adapter (likely HTTP/WebSocket)
+- **If zellij is CLI-driven**: use a local bridge/daemon and invoke Zellij control commands
 - **If Zellij IPC is required**: implement a Kotlin-native client or thin Rust bridge
 
 For data exchange, prefer compact JSON for control messages and keep binary/audio payloads out of the core UI layer.
@@ -305,14 +305,14 @@ _Source:_ [Core app quality guidelines](https://developer.android.com/docs/quali
 ### Architecture Recommendations for Perth
 
 1. Build the app as a layered Android client with Compose + ViewModel + repositories.
-2. Wrap zealot integration behind a transport adapter so the API shape can evolve.
+2. Wrap zellij integration behind a transport adapter so the API shape can evolve.
 3. Keep voice capture foreground-initiated and permission-gated.
 4. Treat command mode as a high-risk workflow with confirmation and logging.
 5. Make local persistence minimal, secure, and mostly metadata-focused.
 
 ### Remaining Architecture Research Gaps
 
-1. ⚠️ Exact zealot server contract is still unknown.
+1. ⚠️ Exact zellij server contract is still unknown.
 2. ⚠️ Need confirmation whether a local daemon is required for Zellij control.
 3. ⚠️ Need final decision on bidirectional live sync transport.
 4. ⚠️ Need explicit command safety policy before implementation.
@@ -328,7 +328,7 @@ Perth should adopt a **greenfield, compose-first, hybrid voice stack** strategy:
 - **Build new UI in Jetpack Compose** rather than migrating legacy XML
 - **Start with Kotlin + coroutines** as the base async model
 - **Use on-device speech first**, with cloud fallback for accuracy or unsupported devices
-- **Isolate zealot integration** behind a transport abstraction so the protocol can evolve
+- **Isolate zellij integration** behind a transport abstraction so the protocol can evolve
 
 Android’s migration guidance shows Compose can interoperate with Views, but Perth does not need a staged migration because it is a new app. The app should still follow Compose’s state-hoisting model and performance practices.
 
@@ -379,7 +379,7 @@ Small-team roles for Perth:
 
 - **Android engineer**: Compose, lifecycle, permissions, release pipeline
 - **Voice/ML engineer**: speech recognition integration, transcription quality, latency tuning
-- **Protocol/integration engineer**: zealot transport, sync, session mapping
+- **Protocol/integration engineer**: zellij transport, sync, session mapping
 - **Product/UX owner**: voice modes, confirmations, task flows
 
 Critical skills:
@@ -407,7 +407,7 @@ _Source:_ [Enable app optimization](https://developer.android.com/build/enable-a
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Unknown zealot API | Blocks integration | Build transport adapter and confirm API early |
+| Unknown zellij API | Blocks integration | Build transport adapter and confirm API early |
 | Voice latency | Poor UX | Use on-device first, async pipelines, caching |
 | Permission friction | Capture failure | Request mic permission only at point of use |
 | Background audio limits | Recording interruptions | Keep capture foreground-initiated |
@@ -420,7 +420,7 @@ _Source:_ [Request runtime permissions](https://developer.android.com/training/p
 
 ### Implementation Roadmap
 
-1. Confirm zealot protocol and session model.
+1. Confirm zellij protocol and session model.
 2. Build Android shell in Kotlin + Compose.
 3. Implement session list, swipe navigation, and terminal rendering.
 4. Add voice capture with permission gating and on-device speech.
@@ -446,7 +446,7 @@ _Source:_ [Request runtime permissions](https://developer.android.com/training/p
 
 ### Success Metrics and KPIs
 
-- Time to connect to zealot session
+- Time to connect to zellij session
 - Time from voice input to rendered result
 - Transcription accuracy rate
 - Command approval and failure rate
@@ -456,4 +456,4 @@ _Source:_ [Request runtime permissions](https://developer.android.com/training/p
 
 ## Research Conclusion
 
-Perth should be built as an Android-native, Compose-first client with a layered architecture, secure local storage, and a hybrid speech pipeline. The main technical unknown is the zealot server contract, so that should be resolved before committing to the transport layer or command execution design.
+Perth should be built as an Android-native, Compose-first client with a layered architecture, secure local storage, and a hybrid speech pipeline. The main technical unknown is the zellij server contract, so that should be resolved before committing to the transport layer or command execution design.

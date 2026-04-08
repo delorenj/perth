@@ -28,7 +28,7 @@ _Perth - Voice-driven Android client for Zellij sessions._
 
 Perth defines 15 functional requirements (FR1-FR15) spanning five architectural domains:
 
-1. **Server Connectivity (FR1, FR2, FR13):** Connect to a zealot server, fetch sessions, handle reconnection. This is the foundational transport layer and the biggest technical unknown.
+1. **Server Connectivity (FR1, FR2, FR13):** Connect to a zellij server, fetch sessions, handle reconnection. This is the foundational transport layer and the biggest technical unknown.
 2. **Navigation & Display (FR3, FR4, FR5):** Represent Zellij tabs as swipeable mobile screens, maintain active pane awareness, and provide typed input fallback.
 3. **Voice Capture & Modes (FR6, FR7, FR8, FR9, FR10):** Three distinct voice modes (command, transcription, task) with shared capture infrastructure. Mode selection must be explicit.
 4. **Command Safety (FR10, FR11):** LLM-driven command interpretation with mandatory confirmation gate. No destructive commands without user approval.
@@ -52,7 +52,7 @@ Perth defines 15 functional requirements (FR1-FR15) spanning five architectural 
 
 ### Technical Constraints & Dependencies
 
-1. **Zealot server contract is unknown.** The Zellij IPC is Rust-based. Perth must abstract the transport layer so it can evolve as the zealot API solidifies.
+1. **Zellij server contract is unknown.** The Zellij IPC is Rust-based. Perth must abstract the transport layer so it can evolve as the zellij API solidifies.
 2. **Android audio lifecycle.** Background audio is increasingly restricted on Android 14+. Voice capture must be foreground-initiated.
 3. **Command safety is non-negotiable.** LLM-interpreted commands must always pass through a confirmation gate before execution.
 4. **On-device vs cloud voice.** Hybrid approach needed: on-device for privacy and offline, cloud fallback for accuracy.
@@ -123,7 +123,7 @@ Perth defines 15 functional requirements (FR1-FR15) spanning five architectural 
 
 **Critical Decisions (Block Implementation):**
 
-1. Transport protocol for zealot server
+1. Transport protocol for zellij server
 2. Voice recognition stack selection
 3. LLM provider for command mode
 4. Android architecture pattern (MVVM layers)
@@ -168,8 +168,8 @@ Perth defines 15 functional requirements (FR1-FR15) spanning five architectural 
 ### Authentication & Security
 
 **Server Authentication:**
-- Connection to zealot via configurable server URL
-- Auth mechanism TBD (depends on zealot contract). Architecture supports token-based auth via an `AuthInterceptor` on OkHttp.
+- Connection to zellij via configurable server URL
+- Auth mechanism TBD (depends on zellij contract). Architecture supports token-based auth via an `AuthInterceptor` on OkHttp.
 - Credentials stored in EncryptedSharedPreferences
 
 **LLM API Security:**
@@ -190,13 +190,13 @@ Perth defines 15 functional requirements (FR1-FR15) spanning five architectural 
 
 ### API & Communication
 
-**Zealot Transport (Critical Decision):**
+**Zellij Transport (Critical Decision):**
 
 Perth uses a **WebSocket-first transport adapter** with HTTP REST fallback.
 
 ```
 ┌──────────────┐     WebSocket      ┌──────────────┐
-│  Perth App   │ ◄────────────────► │ Zealot Server│
+│  Perth App   │ ◄────────────────► │ Zellij Server│
 │              │     (primary)      │              │
 │  Transport   │                    │  Zellij IPC  │
 │  Adapter     │ ◄── HTTP REST ──► │  Bridge      │
@@ -207,7 +207,7 @@ Perth uses a **WebSocket-first transport adapter** with HTTP REST fallback.
 **Transport Adapter Interface:**
 
 ```kotlin
-interface ZealotTransport {
+interface ZellijTransport {
     suspend fun connect(config: ServerConfig): ConnectionResult
     suspend fun disconnect()
     fun sessionFlow(): Flow<List<ZellijSession>>
@@ -219,10 +219,10 @@ interface ZealotTransport {
 ```
 
 This interface isolates the transport completely. Implementations can be:
-- `WebSocketZealotTransport` (primary, real-time)
-- `HttpZealotTransport` (fallback, polling)
-- `MockZealotTransport` (testing)
-- `CliZealotTransport` (future: local daemon bridge)
+- `WebSocketZellijTransport` (primary, real-time)
+- `HttpZellijTransport` (fallback, polling)
+- `MockZellijTransport` (testing)
+- `CliZellijTransport` (future: local daemon bridge)
 
 **Message Format:** JSON over WebSocket. Compact payloads. Binary/audio never sent through this channel.
 
@@ -257,7 +257,7 @@ This interface isolates the transport completely. Implementations can be:
 │  └── ExecuteCommand                         │
 ├─────────────────────────────────────────────┤
 │  Data Layer (Repositories + Adapters)       │
-│  ├── ZealotRepository (transport adapter)   │
+│  ├── ZellijRepository (transport adapter)   │
 │  ├── VoiceRepository (speech recognition)   │
 │  ├── LlmRepository (command interpretation) │
 │  ├── SessionRepository (Room + cache)       │
@@ -374,7 +374,7 @@ Implementations: `MlKitSpeechRecognizer`, `WhisperSpeechRecognizer`
 |---------|-----------|---------|
 | Package | lowercase, dot-separated | `sh.delo.perth.data.repository` |
 | Class | PascalCase | `SessionViewModel` |
-| Interface | PascalCase (no I prefix) | `ZealotTransport` |
+| Interface | PascalCase (no I prefix) | `ZellijTransport` |
 | Function | camelCase | `connectToServer()` |
 | Property | camelCase | `connectionState` |
 | Constant | SCREAMING_SNAKE | `MAX_RETRY_COUNT` |
@@ -651,8 +651,8 @@ perth/
 │   │   │   │   │   │       └── SettingsRepository.kt
 │   │   │   │   │   │
 │   │   │   │   │   ├── network/
-│   │   │   │   │   │   ├── ZealotTransport.kt          # Interface
-│   │   │   │   │   │   ├── WebSocketZealotTransport.kt  # Primary impl
+│   │   │   │   │   │   ├── ZellijTransport.kt          # Interface
+│   │   │   │   │   │   ├── WebSocketZellijTransport.kt  # Primary impl
 │   │   │   │   │   │   └── SpeechRecognizer.kt          # Interface
 │   │   │   │   │   │
 │   │   │   │   │   ├── result/
@@ -695,7 +695,7 @@ perth/
 │   │   │       │       └── CommandSafetyGateTest.kt
 │   │   │       └── core/
 │   │   │           └── network/
-│   │   │               └── WebSocketZealotTransportTest.kt
+│   │   │               └── WebSocketZellijTransportTest.kt
 │   │   │
 │   │   ├── androidTest/                # Instrumented tests
 │   │   │   └── kotlin/sh/delo/perth/
@@ -711,7 +711,7 @@ perth/
 │   │   │
 │   │   └── testFixtures/               # Shared test utilities
 │   │       └── kotlin/sh/delo/perth/
-│   │           ├── FakeZealotTransport.kt
+│   │           ├── FakeZellijTransport.kt
 │   │           ├── FakeSpeechRecognizer.kt
 │   │           └── TestData.kt
 │
@@ -727,7 +727,7 @@ perth/
 
 | Boundary | Interface | Implementation |
 |----------|-----------|----------------|
-| Zealot Server | `ZealotTransport` | `WebSocketZealotTransport` |
+| Zellij Server | `ZellijTransport` | `WebSocketZellijTransport` |
 | Speech Recognition | `SpeechRecognizer` | `MlKitSpeechRecognizer`, `WhisperSpeechRecognizer` |
 | LLM Provider | `LlmRepository` | `LlmRepositoryImpl` (OpenAI) |
 | Local Storage | `SessionRepository`, etc. | Room + DataStore implementations |
@@ -749,7 +749,7 @@ perth/
 ### Requirements to Structure Mapping
 
 **Epic: Foundation & Session Sync (Epic 1)**
-- Transport: `core/network/ZealotTransport.kt`, `WebSocketZealotTransport.kt`
+- Transport: `core/network/ZellijTransport.kt`, `WebSocketZellijTransport.kt`
 - Session: `feature/session/` (all layers)
 - Models: `core/domain/model/ZellijSession.kt`, `ZellijTab.kt`, `ZellijPane.kt`
 - Tests: `test/core/network/`, `test/feature/session/`
@@ -787,7 +787,7 @@ perth/
 
 ```
 ┌─────────┐    WebSocket     ┌──────────┐
-│ Zealot   │ ◄─────────────► │ Transport│
+│ Zellij   │ ◄─────────────► │ Transport│
 │ Server   │    JSON msgs     │ Adapter  │
 └─────────┘                  └────┬─────┘
                                   │ Flow<PaneOutput>
@@ -835,7 +835,7 @@ All technology choices are compatible. Kotlin 2.0+ with Compose, Hilt, Room, Dat
 
 | Requirement | Architectural Support | Status |
 |-------------|----------------------|--------|
-| FR1 - Server Connection | `ZealotTransport` interface + `WebSocketZealotTransport` | Covered |
+| FR1 - Server Connection | `ZellijTransport` interface + `WebSocketZellijTransport` | Covered |
 | FR2 - Session Browser | `SessionRepository` + `SessionListScreen` | Covered |
 | FR3 - Tab/Pane Navigation | `TabPager` + `HorizontalPager` + swipe gestures | Covered |
 | FR4 - Active Pane Awareness | `TerminalViewModel` state + `PaneId` targeting | Covered |
@@ -870,7 +870,7 @@ All technology choices are compatible. Kotlin 2.0+ with Compose, Hilt, Room, Dat
 
 **Known Gaps (Acceptable for MVP):**
 
-1. **Zealot server contract details.** Mitigated by transport adapter interface. The `ZealotTransport` interface can be implemented against whatever protocol zealot exposes.
+1. **Zellij server contract details.** Mitigated by transport adapter interface. The `ZellijTransport` interface can be implemented against whatever protocol zellij exposes.
 2. **Terminal rendering fidelity.** How to render ANSI terminal output in Compose is a detailed implementation concern, not an architectural gap. A `PaneView` composable will handle this.
 3. **LLM prompt templates.** Specific prompt engineering for command interpretation is an implementation detail. The architecture supports it via `LlmRepository`.
 
@@ -881,7 +881,7 @@ All technology choices are compatible. Kotlin 2.0+ with Compose, Hilt, Room, Dat
 **Requirements Analysis**
 - [x] Project context thoroughly analyzed (15 FRs, 6 NFR categories)
 - [x] Scale and complexity assessed (Level 3, High)
-- [x] Technical constraints identified (zealot unknown, audio lifecycle, command safety)
+- [x] Technical constraints identified (zellij unknown, audio lifecycle, command safety)
 - [x] Cross-cutting concerns mapped (auth, error handling, state, lifecycle, observability)
 
 **Architectural Decisions**
@@ -909,7 +909,7 @@ All technology choices are compatible. Kotlin 2.0+ with Compose, Hilt, Room, Dat
 **Confidence Level:** High
 
 **Key Strengths:**
-- Transport adapter isolates the biggest unknown (zealot protocol) behind a clean interface
+- Transport adapter isolates the biggest unknown (zellij protocol) behind a clean interface
 - Hybrid voice stack provides on-device privacy with cloud accuracy fallback
 - Command safety gate is architecturally enforced, not optional
 - Feature-based project structure maps directly to epics for clean parallel development
@@ -929,10 +929,10 @@ All technology choices are compatible. Kotlin 2.0+ with Compose, Hilt, Room, Dat
 - Use implementation patterns consistently across all components
 - Respect project structure and feature module boundaries
 - Refer to this document for all architectural questions
-- When in doubt about zealot transport details, implement against `MockZealotTransport` first
+- When in doubt about zellij transport details, implement against `MockZellijTransport` first
 
 **First Implementation Priority:**
 1. Initialize project with Android Studio Compose Activity template
 2. Set up Hilt, Navigation Compose, and multi-module structure
-3. Define `ZealotTransport` interface and `MockZealotTransport`
+3. Define `ZellijTransport` interface and `MockZellijTransport`
 4. Build `SessionListScreen` against mock data

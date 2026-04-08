@@ -2,7 +2,7 @@ package sh.delo.perth.feature.command.domain
 
 import sh.delo.perth.core.domain.model.PaneId
 import sh.delo.perth.core.domain.repository.CommandAuditRepository
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.core.result.AppException
 import sh.delo.perth.core.result.AppResult
 import timber.log.Timber
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 /**
  * Executes the approved steps in a [CommandPlan] sequentially against the
- * active pane via [ZealotTransport.sendCommand].
+ * active pane via [ZellijTransport.sendCommand].
  *
  * Behaviour:
  * - Only [CommandStep.isApproved] steps are sent.
@@ -21,7 +21,7 @@ import javax.inject.Inject
  *   user whether to continue.
  */
 class ExecuteCommandUseCase @Inject constructor(
-    private val transport: ZealotTransport,
+    private val transport: ZellijTransport,
     private val auditRepository: CommandAuditRepository,
 ) {
     /**

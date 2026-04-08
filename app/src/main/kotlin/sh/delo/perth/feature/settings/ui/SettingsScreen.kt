@@ -163,7 +163,7 @@ private fun ServerSection(
                 }
                 Icon(icon, contentDescription = null)
             },
-            title = "Zealot Server",
+            title = "Zellij Server",
         )
         Spacer(Modifier.height(6.dp))
         ConnectionStatusRow(connectionState = connectionState, isBusy = isSaving)

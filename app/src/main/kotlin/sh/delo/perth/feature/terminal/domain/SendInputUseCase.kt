@@ -1,18 +1,18 @@
 package sh.delo.perth.feature.terminal.domain
 
 import sh.delo.perth.core.domain.model.PaneId
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.core.result.AppException
 import sh.delo.perth.core.result.AppResult
 import javax.inject.Inject
 
 /**
- * Validates and sends raw keyboard input to the specified pane via [ZealotTransport].
+ * Validates and sends raw keyboard input to the specified pane via [ZellijTransport].
  *
  * Returns [AppResult.Error] immediately if no pane is active or the input is blank.
  */
 class SendInputUseCase @Inject constructor(
-    private val transport: ZealotTransport,
+    private val transport: ZellijTransport,
 ) {
 
     suspend operator fun invoke(paneId: PaneId?, input: String): AppResult<Unit> {

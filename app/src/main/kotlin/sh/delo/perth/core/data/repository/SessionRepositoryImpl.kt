@@ -9,7 +9,7 @@ import sh.delo.perth.core.domain.model.ServerConfig
 import sh.delo.perth.core.domain.model.ZellijSession
 import sh.delo.perth.core.domain.model.ZellijTab
 import sh.delo.perth.core.domain.repository.SessionRepository
-import sh.delo.perth.core.network.ZealotTransport
+import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.core.result.AppException
 import sh.delo.perth.core.result.AppResult
 import sh.delo.perth.core.result.runCatchingAppResult
@@ -19,7 +19,7 @@ import javax.inject.Singleton
 
 @Singleton
 class SessionRepositoryImpl @Inject constructor(
-    private val transport: ZealotTransport,
+    private val transport: ZellijTransport,
     private val sessionDao: SessionDao,
 ) : SessionRepository {
 
