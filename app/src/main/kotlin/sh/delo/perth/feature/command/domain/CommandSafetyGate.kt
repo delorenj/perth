@@ -60,7 +60,9 @@ class CommandSafetyGate @Inject constructor() {
             Regex("""truncate\s+(table\s+)?\w"""),
             Regex("""delete\s+from\s"""),
             // Process termination
-            Regex("""kill\s+(-9|-SIGKILL|-KILL)"""),
+            // Patterns are matched against the lowercased command string, so signal
+            // names must be lowercase here too. Uppercase variants would silently miss.
+            Regex("""kill\s+(-9|-sigkill|-kill)"""),
             Regex("""killall\s"""),
             Regex("""pkill\s"""),
             // Privilege escalation destroying data
