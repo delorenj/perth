@@ -66,4 +66,18 @@ class SettingsRepositoryImpl @Inject constructor(
         runCatchingAppResult(errorMapper = { AppException.Storage(it.message ?: "Save failed", it) }) {
             userPreferences.saveVoiceMode(voiceMode)
         }
+
+    override fun auditRetentionDaysFlow(): Flow<Int> =
+        userPreferences.auditRetentionDaysFlow
+
+    override suspend fun getAuditRetentionDays(): Int =
+        userPreferences.auditRetentionDaysFlow.first()
+
+    override suspend fun saveAuditRetentionDays(days: Int): AppResult<Unit> =
+        runCatchingAppResult(errorMapper = { AppException.Storage(it.message ?: "Save failed", it) }) {
+            require(days in SettingsRepository.MIN_AUDIT_RETENTION_DAYS..SettingsRepository.MAX_AUDIT_RETENTION_DAYS) {
+                "Retention days must be between ${SettingsRepository.MIN_AUDIT_RETENTION_DAYS} and ${SettingsRepository.MAX_AUDIT_RETENTION_DAYS}"
+            }
+            userPreferences.saveAuditRetentionDays(days)
+        }
 }

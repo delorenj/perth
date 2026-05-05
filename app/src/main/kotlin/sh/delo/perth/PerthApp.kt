@@ -2,6 +2,7 @@ package sh.delo.perth
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
+import sh.delo.perth.work.AuditWorkScheduler
 import timber.log.Timber
 
 @HiltAndroidApp
@@ -10,6 +11,9 @@ class PerthApp : Application() {
     override fun onCreate() {
         super.onCreate()
         initLogging()
+        // Story 8.3: schedule the daily audit-log retention pass. KEEP policy makes
+        // this safe to call on every cold start.
+        AuditWorkScheduler.schedule(this)
     }
 
     private fun initLogging() {

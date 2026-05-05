@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material.icons.outlined.Terminal
@@ -124,6 +125,60 @@ fun SettingsScreen(
                 sessions = state.recentSessions,
                 onClearHistory = viewModel::onClearRecentSessions,
             )
+
+            AuditRetentionSection(
+                currentDays = state.auditRetentionDays,
+                onSave = viewModel::onAuditRetentionChange,
+            )
+        }
+    }
+}
+
+/** Story 8.3: configurable retention window for the command audit log. */
+@Composable
+private fun AuditRetentionSection(
+    currentDays: Int,
+    onSave: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var input by rememberSaveable(currentDays) { mutableStateOf(currentDays.toString()) }
+    val parsed = input.trim().toIntOrNull()
+    val isValid = parsed != null &&
+        parsed in SettingsRepository.MIN_AUDIT_RETENTION_DAYS..SettingsRepository.MAX_AUDIT_RETENTION_DAYS
+    val isDirty = parsed != null && parsed != currentDays
+
+    Column(modifier = modifier) {
+        SectionLabel(
+            icon = { Icon(Icons.Default.Schedule, contentDescription = null) },
+            title = "Audit Log Retention",
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = "Command audit entries older than this are pruned daily. Range: " +
+                "${SettingsRepository.MIN_AUDIT_RETENTION_DAYS}–${SettingsRepository.MAX_AUDIT_RETENTION_DAYS} days.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = input,
+            onValueChange = { input = it.filter(Char::isDigit).take(3) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Retention period (days)") },
+            singleLine = true,
+            isError = !isValid && input.isNotEmpty(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done,
+            ),
+        )
+        Spacer(Modifier.height(8.dp))
+        Button(
+            onClick = { parsed?.let(onSave) },
+            enabled = isValid && isDirty,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Save retention")
         }
     }
 }

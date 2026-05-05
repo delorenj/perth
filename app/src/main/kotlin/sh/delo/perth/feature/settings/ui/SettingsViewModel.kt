@@ -1,8 +1,10 @@
 package sh.delo.perth.feature.settings.ui
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +19,7 @@ import sh.delo.perth.core.domain.repository.SessionRepository
 import sh.delo.perth.core.domain.repository.SettingsRepository
 import sh.delo.perth.core.network.ZellijTransport
 import sh.delo.perth.core.result.AppException
+import sh.delo.perth.work.AuditWorkScheduler
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -26,6 +29,7 @@ class SettingsViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val transport: ZellijTransport,
     private val llmRepository: LlmRepository,
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
@@ -36,6 +40,7 @@ class SettingsViewModel @Inject constructor(
         observeVoiceMode()
         observeConnectionState()
         observeRecentSessions()
+        observeAuditRetention()
     }
 
     private fun loadSettings() {
@@ -67,6 +72,12 @@ class SettingsViewModel @Inject constructor(
     private fun observeRecentSessions() {
         sessionRepository.recentSessionsFlow()
             .onEach { sessions -> _state.update { it.copy(recentSessions = sessions) } }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeAuditRetention() {
+        settingsRepository.auditRetentionDaysFlow()
+            .onEach { days -> _state.update { it.copy(auditRetentionDays = days) } }
             .launchIn(viewModelScope)
     }
 
@@ -185,5 +196,25 @@ class SettingsViewModel @Inject constructor(
 
     fun onDismissSaveSuccess() {
         _state.update { it.copy(saveSuccess = false) }
+    }
+
+    /**
+     * Story 8.3: persists a new audit-log retention period and force-reschedules
+     * the periodic worker so the new window takes effect on the next pass.
+     */
+    fun onAuditRetentionChange(days: Int) {
+        viewModelScope.launch {
+            val clamped = days.coerceIn(
+                SettingsRepository.MIN_AUDIT_RETENTION_DAYS,
+                SettingsRepository.MAX_AUDIT_RETENTION_DAYS,
+            )
+            val result = settingsRepository.saveAuditRetentionDays(clamped)
+            if (result.isError) {
+                Timber.e(result.exceptionOrNull(), "Failed to save audit retention")
+                _state.update { it.copy(error = result.exceptionOrNull() as? AppException) }
+            } else {
+                AuditWorkScheduler.reschedule(appContext)
+            }
+        }
     }
 }

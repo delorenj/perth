@@ -21,4 +21,6 @@ data class SettingsUiState(
     val saveSuccess: Boolean = false,
     val navigateToSessions: Boolean = false,
     val recentSessions: List<ZellijSession> = emptyList(),
+    /** Story 8.3: configured audit-log retention period in days. */
+    val auditRetentionDays: Int = SettingsRepository.DEFAULT_AUDIT_RETENTION_DAYS,
 )

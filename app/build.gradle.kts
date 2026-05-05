@@ -118,6 +118,9 @@ dependencies {
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 
+    // WorkManager (audit log retention scheduling — Story 8.3)
+    implementation(libs.androidx.work.runtime.ktx)
+
     // Security
     implementation(libs.androidx.security.crypto)
 

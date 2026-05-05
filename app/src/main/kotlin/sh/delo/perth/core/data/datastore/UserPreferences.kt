@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -23,6 +24,7 @@ class UserPreferences @Inject constructor(
     private object Keys {
         val SERVER_URL = stringPreferencesKey("server_url")
         val VOICE_MODE = stringPreferencesKey("voice_mode")
+        val AUDIT_RETENTION_DAYS = intPreferencesKey("audit_retention_days")
     }
 
     val serverUrlFlow: Flow<String?> = context.dataStore.data.map { prefs ->
@@ -33,6 +35,10 @@ class UserPreferences @Inject constructor(
         prefs[Keys.VOICE_MODE]
             ?.let { runCatching { SettingsRepository.VoiceMode.valueOf(it) }.getOrNull() }
             ?: SettingsRepository.VoiceMode.Transcription
+    }
+
+    val auditRetentionDaysFlow: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[Keys.AUDIT_RETENTION_DAYS] ?: SettingsRepository.DEFAULT_AUDIT_RETENTION_DAYS
     }
 
     suspend fun saveServerUrl(url: String) {
@@ -50,6 +56,12 @@ class UserPreferences @Inject constructor(
     suspend fun saveVoiceMode(mode: SettingsRepository.VoiceMode) {
         context.dataStore.edit { prefs ->
             prefs[Keys.VOICE_MODE] = mode.name
+        }
+    }
+
+    suspend fun saveAuditRetentionDays(days: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.AUDIT_RETENTION_DAYS] = days
         }
     }
 }

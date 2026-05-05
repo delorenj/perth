@@ -58,4 +58,10 @@
     <!-- Foreground service notification -->
     <string name="notification_session_title">Perth</string>
     <string name="notification_session_text">Active terminal session</string>
+
+    <!-- Audit log retention (Story 8.3) -->
+    <string name="settings_retention_section">Audit Log Retention</string>
+    <string name="settings_retention_label">Retention period (days)</string>
+    <string name="settings_retention_hint">Command audit log entries older than this are pruned daily in the background. Range: 1–365 days.</string>
+    <string name="settings_retention_save">Save retention</string>
 </resources>
