@@ -54,4 +54,8 @@
     <!-- Accessibility -->
     <string name="cd_connection_status">Connection status indicator</string>
     <string name="cd_terminal_icon">Terminal session</string>
+
+    <!-- Foreground service notification -->
+    <string name="notification_session_title">Perth</string>
+    <string name="notification_session_text">Active terminal session</string>
 </resources>
