@@ -29,7 +29,7 @@ events:
 # Plane State Mapping
 states:
   backlog: "Backlog"
-  triage: "Triage"
+  triage: "Triaging"  # Plane reserves "Triage" for its intake feature; use "Triaging"
   refining: "Refining"
   ready: "Ready"
   in_progress: "In Progress"
