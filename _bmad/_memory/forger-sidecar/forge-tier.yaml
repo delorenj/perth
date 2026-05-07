@@ -1,0 +1,32 @@
+# Ferris Sidecar: Forge Tier State
+# Written by setup workflow
+
+# Tool availability (detected during [SF] Setup Forge)
+tools:
+  ast_grep: true
+  gh_cli: true
+  qmd: true
+  ccc: false
+  ccc_daemon: ~
+  security_scan: false # Detected but not yet consumed by downstream workflows — reserved for future validation pre-check
+
+# Capability tier (derived from tool availability)
+# Quick = no tools | Forge = + ast-grep | Forge+ = + ast-grep + ccc | Deep = + ast-grep + gh + QMD
+tier: Deep
+tier_detected_at: 2026-04-26T21:15:29Z
+
+# CCC semantic index state (managed by setup and extraction workflows)
+ccc_index:
+  indexed_path: ~
+  last_indexed: ~
+  status: "none"
+  staleness_threshold_hours: 24
+  file_count: ~
+  exclude_patterns: []
+
+# CCC index registry (tracks which source paths have been indexed for skill workflows)
+ccc_index_registry: []
+
+# QMD collection registry (populated by create-skill, consumed by audit/update-skill)
+# Each entry tracks a QMD collection created during skill workflows
+qmd_collections: []

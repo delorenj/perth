@@ -1,0 +1,228 @@
+version: "6.0.0"
+project_name: "chrome-store-audit-fixes"
+project_level: 1
+current_sprint: 1
+sprint_plan_path: "docs/sprint-plan-chrome-store-audit-fixes-20260114.md"
+
+sprints:
+  - sprint_number: 1
+    start_date: "2026-01-15"
+    end_date: "2026-01-29"
+    capacity_points: 30
+    committed_points: 27
+    completed_points: 19
+    dev_completed_points: 19
+    status: "blocked_manual_steps"
+    goal: "Resolve all CRITICAL blockers and achieve submission-ready security posture"
+    blocker_reason: "CWS-001 (3pts) and CWS-003 (5pts) require manual steps: Google Cloud Console access for API key rotation and web hosting for privacy policy. All automated development work (19/27 points, 70%) is complete."
+    stories:
+      - story_id: "CWS-001"
+        title: "Revoke and Rotate Exposed GEMINI API Key"
+        points: 3
+        priority: "urgent"
+        status: "in_progress"
+        plane_ticket: true
+        assigned_to: "Claude"
+        started_date: "2026-01-23T18:30:00Z"
+        notes: "Automated steps complete. Manual steps documented in docs/security/CWS-001_MANUAL_STEPS.md"
+      - story_id: "CWS-002"
+        title: "Remove Development Host Permissions from Production Manifest"
+        points: 3
+        priority: "urgent"
+        status: "completed"
+        plane_ticket: true
+        assigned_to: "Claude"
+        started_date: "2026-01-23T20:00:00Z"
+        completed_date: "2026-01-23T20:15:00Z"
+        notes: "Verified host_permissions filtering works correctly. Documented filtering behavior in CLAUDE.md. Filtering automatically removes localhost and private IPs in production builds."
+      - story_id: "CWS-003"
+        title: "Create and Publish Privacy Policy"
+        points: 5
+        priority: "urgent"
+        status: "in_progress"
+        plane_ticket: true
+        assigned_to: "Claude"
+        started_date: "2026-01-23T20:15:00Z"
+        notes: "Privacy policy drafted and tested. Manual hosting steps documented in docs/legal/CWS-003_MANUAL_STEPS.md. Requires: HTML conversion, public hosting, Chrome Web Store dashboard configuration."
+      - story_id: "CWS-004"
+        title: "Fix Production Build Manifest Transformation"
+        points: 3
+        priority: "urgent"
+        status: "completed"
+        plane_ticket: true
+        assigned_to: "Claude"
+        started_date: "2026-01-23T19:00:00Z"
+        completed_date: "2026-01-23T19:45:00Z"
+        notes: "Fixed webpack conditional logic. Added validation script. Documented build process."
+      - story_id: "CWS-005"
+        title: "Remove or Justify Debugger Permission"
+        points: 2
+        priority: "urgent"
+        status: "completed"
+        plane_ticket: true
+        assigned_to: "Claude"
+        started_date: "2026-01-23T20:30:00Z"
+        completed_date: "2026-01-23T20:45:00Z"
+        notes: "Debugger permission is actively used for accessibility tree capture. Created comprehensive justification document at extension/docs/permissions/DEBUGGER_PERMISSION_JUSTIFICATION.md. Updated privacy policy and CLAUDE.md documentation. Permission is required for EMR form analysis with nested iframes and Shadow DOM."
+      - story_id: "CWS-006"
+        title: "Justify EMR Site-Specific Host Permissions"
+        points: 2
+        priority: "urgent"
+        status: "completed"
+        plane_ticket: true
+        assigned_to: "Claude"
+        started_date: "2026-01-23T20:45:00Z"
+        completed_date: "2026-01-23T21:00:00Z"
+        notes: "Created comprehensive justification at extension/docs/permissions/HOST_PERMISSIONS_JUSTIFICATION.md. Documented all 9 host permissions (3 EMR systems, 3 IntelliForia services, 3 third-party services). Explained necessity for each domain, what data is accessed, user benefits, and Chrome Web Store compliance."
+      - story_id: "CWS-009"
+        title: "Fix TypeScript and ESLint Errors"
+        points: 5
+        priority: "high"
+        status: "completed"
+        plane_ticket: true
+        assigned_to: "Claude"
+        started_date: "2026-01-23T12:00:00Z"
+        completed_date: "2026-01-25T18:00:00Z"
+        notes: "Fixed all 177 ESLint violations across codebase. Commits: 842b7eb4, bfd0e096, 7d919270. Zero errors remaining."
+      - story_id: "CWS-014"
+        title: "Create Build Validation Script"
+        points: 3
+        priority: "medium"
+        status: "completed"
+        plane_ticket: true
+        assigned_to: "Claude"
+        started_date: "2026-01-25T13:00:00Z"
+        completed_date: "2026-01-25T13:05:00Z"
+        notes: "Created extension/scripts/validate-build.js (202 lines). Validates 8 categories: name, icons, action icons, host permissions, required fields, action fields, version format, CSP. All checks passing on current build."
+      - story_id: "CWS-012"
+        title: "Add Explicit CSP to Manifest"
+        points: 1
+        priority: "medium"
+        status: "completed"
+        plane_ticket: true
+        assigned_to: "Claude"
+        completed_date: "2026-01-25T13:00:00Z"
+        notes: "CSP already configured in manifest.json lines 5-7. Strict policy: script-src 'self'; object-src 'self'; worker-src 'self'. Chrome Web Store compliant."
+
+  - sprint_number: 2
+    start_date: "2026-01-30"
+    end_date: "2026-02-13"
+    capacity_points: 30
+    committed_points: 17
+    completed_points: 0
+    status: "planned"
+    goal: "Optimize performance, polish store assets, achieve Chrome Web Store submission"
+    stories:
+      - story_id: "CWS-007"
+        title: "Optimize Bundle Sizes"
+        points: 8
+        priority: "high"
+        status: "pending"
+        plane_ticket: true
+      - story_id: "CWS-008"
+        title: "Optimize Store Screenshots"
+        points: 2
+        priority: "high"
+        status: "pending"
+        plane_ticket: true
+      - story_id: "CWS-011"
+        title: "Create Comprehensive Store Description"
+        points: 3
+        priority: "high"
+        status: "pending"
+        plane_ticket: true
+      - story_id: "CWS-010"
+        title: "Resize Promotional Tile"
+        points: 1
+        priority: "high"
+        status: "pending"
+        plane_ticket: true
+      - story_id: "CWS-013"
+        title: "Move PostHog Key to Backend Proxy"
+        points: 3
+        priority: "medium"
+        status: "pending"
+        plane_ticket: true
+
+velocity:
+  sprint_1: null
+  sprint_2: null
+  rolling_average: null
+
+team:
+  size: 1
+  sprint_length_weeks: 2
+  capacity_per_sprint: 30
+
+progress:
+  stories_completed: 7
+  stories_in_progress: 2
+  stories_blocked: 0
+  stories_pending: 5
+  total_effort_completed: 19
+  completion_percentage: 70
+
+plane_integration:
+  workspace: "intelliforia"
+  project_id: "dfb05f73-cab7-4447-a4a1-360bb7ca7177"
+  base_url: "plane.internal.intelliforia.com"
+  tickets_created: true
+  tickets_created_date: "2026-01-15"
+  total_tickets: 14
+
+deliverables:
+  sprint_plan: "docs/sprint-plan-chrome-store-audit-fixes-20260114.md"
+  plane_tickets: 14
+  script: "scripts/create-plane-tickets-audit-fixes.js"
+
+risks:
+  high:
+    - "API key rotation requires production downtime"
+    - "Privacy policy legal review delays"
+    - "Chrome Web Store rejection due to debugger permission"
+  medium:
+    - "Bundle optimization breaks extension functionality"
+    - "Backend changes for PostHog proxy blocked"
+  low:
+    - "Screenshot resizing loses visual quality"
+
+dependencies:
+  external:
+    - "Google Cloud Console access (CWS-001)"
+    - "Heroku production app access (CWS-001)"
+    - "Web hosting for privacy policy (CWS-003)"
+  internal:
+    - "CWS-002 depends on CWS-004"
+    - "CWS-006 depends on CWS-011"
+    - "CWS-014 depends on CWS-004"
+
+submission_ready: false
+target_submission_date: "2026-02-13"
+expected_approval_date: "2026-02-27"
+
+notes: |
+  Sprint planning completed 2026-01-14. All 14 Plane tickets created successfully.
+
+  CRITICAL: CWS-001 (API key rotation) must be completed FIRST before any other work.
+
+  Sprint 1 focuses on resolving all CRITICAL security and compliance blockers.
+  Sprint 2 focuses on performance optimization and store asset polish.
+
+  Estimated submission likelihood after fixes: 35-45% (improved from 25-35%).
+
+  UPDATE 2026-01-26: All development work complete (19/27 points, 70%). Remaining 8 points
+  blocked by manual steps requiring human access to Google Cloud Console (CWS-001) and
+  web hosting setup (CWS-003). Development deliverables:
+  - CWS-002: Host permissions filtering (completed)
+  - CWS-004: Manifest transformation (completed)
+  - CWS-005: Debugger permission justification (completed)
+  - CWS-006: Host permissions justification (completed)
+  - CWS-009: All ESLint/TypeScript errors fixed (177 violations, completed)
+  - CWS-012: CSP validation (completed)
+  - CWS-014: Build validation script (202 lines, completed)
+
+  Manual steps documented in:
+  - docs/security/CWS-001_MANUAL_STEPS.md
+  - docs/legal/CWS-003_MANUAL_STEPS.md
+
+last_updated: "2026-01-26T05:48:00Z"

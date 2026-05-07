@@ -1,18 +1,31 @@
 installation:
-  version: 6.0.0-alpha.23
-  installDate: 2026-03-08T19:53:52.586Z
-  lastUpdated: 2026-03-08T19:53:52.586Z
+  version: 6.6.0
+  installDate: 2026-02-05T16:08:41.384Z
+  lastUpdated: 2026-05-05T04:23:55.045Z
 modules:
-  - core
-  - bmb
-  - bmm
-  - cis
-  - custom
+  - name: core
+    version: 6.6.0
+    installDate: 2026-02-05T16:08:40.961Z
+    lastUpdated: 2026-05-05T04:23:55.004Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+  - name: bmp
+    version: main
+    installDate: 2026-04-26T21:11:40.318Z
+    lastUpdated: 2026-05-05T04:23:55.045Z
+    source: custom
+    npmPackage: null
+    repoUrl: https://github.com/delorenj/bmad-module-autopilot
+    channel: next
 ides:
+  - antigravity
   - claude-code
   - codex
   - github-copilot
-  - opencode
   - auggie
-  - crush
   - gemini
+  - kimi-code
+  - mistral-vibe
+  - openclaw
+  - opencode
