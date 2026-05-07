@@ -63,9 +63,13 @@ object ErrorMapper {
         return if (isMicUnavailable) {
             ErrorPresentation(
                 message = "Microphone not available. Check permissions.",
+                // Retry exists as a last resort per the "always available" guarantee
+                // in Story 6.1, but it is intentionally last because retrying without
+                // granting the permission reproduces the failure.
                 recoveryActions = listOf(
                     RecoveryAction.OpenSettings,
                     RecoveryAction.TypeInstead,
+                    RecoveryAction.Retry,
                     RecoveryAction.Dismiss,
                 ),
             )
@@ -115,7 +119,15 @@ object ErrorMapper {
 
     private fun mapAuthentication(e: AppException.Authentication): ErrorPresentation = ErrorPresentation(
         message = "Authentication failed. Check your server credentials in Settings.",
-        recoveryActions = listOf(RecoveryAction.CheckApiKey, RecoveryAction.Dismiss),
+        // Retry comes after CheckApiKey because retrying a known-bad credential just
+        // reproduces the failure. CheckApiKey leads to Settings where the user can
+        // fix the underlying problem; Retry is kept available so the user is never
+        // stuck per the "Retry button always available" guarantee in Story 6.1.
+        recoveryActions = listOf(
+            RecoveryAction.CheckApiKey,
+            RecoveryAction.Retry,
+            RecoveryAction.Dismiss,
+        ),
     )
 
     private fun mapTimeout(e: AppException.Timeout): ErrorPresentation = ErrorPresentation(
