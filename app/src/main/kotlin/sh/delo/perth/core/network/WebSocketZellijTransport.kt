@@ -24,6 +24,7 @@ import sh.delo.perth.core.domain.model.ConnectionState
 import sh.delo.perth.core.domain.model.PaneId
 import sh.delo.perth.core.domain.model.PaneOutput
 import sh.delo.perth.core.domain.model.ServerConfig
+import sh.delo.perth.core.domain.model.ZellijPane
 import sh.delo.perth.core.domain.model.ZellijSession
 import sh.delo.perth.core.domain.model.ZellijTab
 import sh.delo.perth.core.result.AppException
@@ -167,18 +168,65 @@ class WebSocketZellijTransport @Inject constructor(
                         ZellijSession(
                             id = info.name,
                             name = info.name,
-                            tabs = emptyList(), // Bridge doesn't send tabs yet
+                            tabs = emptyList(), // Tabs arrive via SessionAttached.
                             createdAt = Instant.now()
                         )
                     }
                     lastKnownSessions = sessions
                     scope.launch { _sessionFlow.emit(sessions) }
                 }
+                is PerthMessage.SessionAttached -> {
+                    // Merge the tab/pane tree from the bridge plugin into the
+                    // cached session entry. If the session wasn't in the list
+                    // yet (e.g. attach happened before list refresh), insert
+                    // a new entry — this happens with the M2 single-session
+                    // workflow where the phone goes straight to the Workspace.
+                    val tabs = message.tabs.map { wire ->
+                        ZellijTab(
+                            id = wire.position.toString(),
+                            name = wire.name,
+                            isActive = wire.is_active,
+                            // Plugin doesn't populate per-pane details yet (M2
+                            // ships viewport-only); synthesize a single active
+                            // pane entry so the UI knows where to direct input.
+                            panes = wire.active_pane_id?.let { paneId ->
+                                listOf(
+                                    ZellijPane(
+                                        id = PaneId(paneId.toString()),
+                                        title = wire.name,
+                                        isActive = true,
+                                    )
+                                )
+                            } ?: emptyList(),
+                        )
+                    }
+                    val existing = lastKnownSessions.find { it.name == message.session_name }
+                    val updated = (existing ?: ZellijSession(
+                        id = message.session_name,
+                        name = message.session_name,
+                        tabs = emptyList(),
+                        createdAt = Instant.now(),
+                    )).copy(tabs = tabs)
+                    lastKnownSessions = lastKnownSessions
+                        .filterNot { it.name == message.session_name } + updated
+                    scope.launch { _sessionFlow.emit(lastKnownSessions) }
+                }
                 is PerthMessage.PaneOutputMessage -> {
-                    val decoded = Base64.decode(message.data, Base64.DEFAULT)
+                    // The bridge plugin posts viewport text directly (not
+                    // base64-encoded) since zellij 0.44 PaneContents already
+                    // returns Strings. Detect and route accordingly: if the
+                    // payload decodes cleanly as base64 we treat it as such,
+                    // otherwise pass through. This preserves compatibility
+                    // with a future binary-stream path without breaking M2.
+                    val text = try {
+                        val decoded = Base64.decode(message.data, Base64.NO_WRAP or Base64.NO_PADDING)
+                        String(decoded, Charsets.UTF_8)
+                    } catch (_: IllegalArgumentException) {
+                        message.data
+                    }
                     val output = PaneOutput(
                         paneId = PaneId(message.pane_id),
-                        text = String(decoded, Charsets.UTF_8)
+                        text = text,
                     )
                     scope.launch { _paneOutputFlow.emit(output) }
                 }

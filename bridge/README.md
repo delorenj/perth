@@ -69,9 +69,13 @@ A starter compose file lives at `~/docker/stacks/perth-bridge/compose.yml`. It e
 | Milestone | Status |
 |-----------|--------|
 | M1: real session names returned over WebSocket | ✅ Done |
-| M2: tab structure, attach to session, read-only output stream | ⚠ Partial — `SessionAttach` opens the socket but raw bytes are not parsed as zellij MessagePack frames yet |
-| M3: bidirectional input/output with the active pane | Not started |
+| M2: tab structure + read-only pane viewport via zellij plugin | ✅ Done |
+| M3: bidirectional input/output with the active pane | Partial — `pane_input` already round-trips through `zellij action write-chars`; pane_output streaming is live via the plugin |
 
-## Wire protocol open questions
+## M2 architecture (plugin → bridge → phone)
 
-The Kotlin client encodes `pane_id` as a string. The bridge currently hardcodes `"0"` because zellij's per-pane addressing isn't surfaced through the CLI. M2 needs a research spike on either zellij's plugin API or parsing the cached session state to derive real pane IDs.
+The plugin (`plugin/` subdirectory) runs inside each zellij session, subscribes to `TabUpdate` / `PaneUpdate` / `PaneRenderReportWithAnsi`, and POSTs a JSON snapshot to `POST /internal/state` whenever the session's tab tree or pane content changes. The bridge caches the snapshot per session name and replays it on the WebSocket when a phone client sends `session_attach`, then fans out live updates as new snapshots arrive.
+
+See `plugin/README.md` for build and install instructions.
+
+The internal route is intentionally unauthenticated and assumes the plugin runs on the same host as the bridge — bind the bridge to localhost or firewall the route if exposing the WebSocket externally.

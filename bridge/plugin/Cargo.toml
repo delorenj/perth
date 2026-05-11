@@ -1,0 +1,21 @@
+[package]
+name = "perth-reporter"
+version = "0.1.0"
+edition = "2021"
+description = "Zellij plugin that reports tab/pane state to the Perth bridge via HTTP."
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+# zellij-tile must match the host zellij version closely. 0.44.x is what's
+# running on big-chungus (verified via `zellij --version`).
+zellij-tile = "0.44.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
