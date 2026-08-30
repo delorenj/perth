@@ -5,6 +5,7 @@ description: 'Spawn QA Agent for line-item AC verification with retry loop handl
 doneStepFile: './step-07-complete.md'
 retryStepFile: './step-04-implement.md'
 auditCommentTemplate: '../data/audit-comment-template.md'
+eventSchemas: '../data/event-schemas.md'
 workflowConfig: '../workflow.yaml'
 ---
 
@@ -120,7 +121,7 @@ details:
 ```
 
 Update ticket status to done.
-Broadcast Bloodbank event with `new_state: "done"`.
+Broadcast `bloodbank.repo.task.updated` with `phase: "done"` (see {eventSchemas}).
 
 **Proceeding to completion...**
 Immediately load, read entire file, then execute {doneStepFile}.
@@ -147,7 +148,7 @@ details:
 ```
 
 Update ticket status to in_progress.
-Broadcast Bloodbank event with `new_state: "in_progress"`.
+Broadcast `bloodbank.repo.task.updated` with `phase: "in_progress"` (see {eventSchemas}).
 
 **Routing back to implementation with defect details...**
 Immediately load, read entire file, then execute {retryStepFile}.
@@ -170,7 +171,7 @@ details:
 ```
 
 Update ticket status to blocked.
-Broadcast `ticket.stale` Bloodbank event with full failure history.
+Broadcast `bloodbank.repo.task.updated` with `trigger_source: "ticket-lifecycle-staleness"`, `phase: "blocked"`, and the full failure history in `data` (see {eventSchemas}). There is no separate staleness type.
 
 **Ticket blocked. Exiting to completion...**
 Immediately load, read entire file, then execute {doneStepFile}.

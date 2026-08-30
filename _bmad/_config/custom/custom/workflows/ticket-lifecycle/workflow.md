@@ -51,8 +51,8 @@ Load project context:
 - `.plane.json` from project root for workspace and project identification
 - `~/.claude/plane-workspaces.json` for workspace API configuration
 - Plane skill at `~/.claude/skills/managing-tickets-and-tasks-in-plane/` for API patterns
-- Bloodbank CLI at `~/code/33GOD/bloodbank/` for event publishing
-- Holyfields schemas at `~/code/33GOD/holyfields/schemas/` for event contracts
+- Bloodbank CLI (`bb` / `bb-emit`) on PATH for event publishing
+- Bloodbank schemas at `~/code/33GOD/bloodbank/schemas/bloodbank/` for event contracts; `bb contract` for the legal vocabulary
 
 ### 2. Mode Determination
 
@@ -67,7 +67,7 @@ Load project context:
 "What would you like to do?
 
 **[R]un** - Process a ticket through the lifecycle
-**[V]alidate** - Check workflow prerequisites (Plane, Bloodbank, schemas)
+**[V]alidate** - Check workflow prerequisites (Plane, Bloodbank, event contract)
 **[E]dit** - Modify workflow configuration (rubric, retry caps, staleness durations)
 
 Please select: [R]un / [V]alidate / [E]dit"

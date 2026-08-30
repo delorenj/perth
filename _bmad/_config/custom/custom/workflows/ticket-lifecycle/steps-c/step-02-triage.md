@@ -6,6 +6,7 @@ nextStepFile: './step-04-implement.md'
 refineStepFile: './step-03-refine.md'
 acRubric: '../data/ac-sufficiency-rubric.md'
 auditCommentTemplate: '../data/audit-comment-template.md'
+eventSchemas: '../data/event-schemas.md'
 ---
 
 # Step 2: Triage - AC Sufficiency Evaluation
@@ -96,18 +97,8 @@ reason: AC passed sufficiency rubric (4/4 criteria met)
 
 Update ticket status to ready state.
 
-Broadcast Bloodbank event:
-```json
-{
-  "event_type": "ticket.state_changed",
-  "payload": {
-    "project_id": "{project_id}",
-    "ticket_id": "{ticket_id}",
-    "previous_state": "triage",
-    "new_state": "ready"
-  }
-}
-```
+Broadcast the Bloodbank event — type `bloodbank.repo.task.updated`, `data`
+shaped per {eventSchemas}, with `previous_phase: "triage"` and `phase: "ready"`.
 
 **Proceeding to implementation...**
 Immediately load, read entire file, then execute {nextStepFile}.
@@ -131,7 +122,7 @@ details:
 
 Update ticket status to refining state.
 
-Broadcast Bloodbank event with `new_state: "refining"`.
+Broadcast `bloodbank.repo.task.updated` with `phase: "refining"` (see {eventSchemas}).
 
 **Proceeding to AC refinement...**
 Immediately load, read entire file, then execute {refineStepFile}.

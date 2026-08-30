@@ -5,6 +5,7 @@ description: 'Spawn Coding Agent sub-agent to implement ticket requirements and 
 nextStepFile: './step-05-review.md'
 blockedStepFile: './step-07-complete.md'
 auditCommentTemplate: '../data/audit-comment-template.md'
+eventSchemas: '../data/event-schemas.md'
 ---
 
 # Step 4: Implementation via Coding Agent
@@ -73,7 +74,7 @@ reason: Implementation starting. Coding agent spawned.
 ```
 
 Update ticket status to in_progress.
-Broadcast Bloodbank event with `new_state: "in_progress"`.
+Broadcast `bloodbank.repo.task.updated` with `phase: "in_progress"` (see {eventSchemas}).
 
 ### 3. Spawn Coding Agent Sub-Agent
 
@@ -121,7 +122,7 @@ details:
 ```
 
 Update ticket status to blocked.
-Broadcast `ticket.stale` Bloodbank event.
+Broadcast `bloodbank.repo.task.updated` with `trigger_source: "ticket-lifecycle-staleness"` and `phase: "blocked"` (see {eventSchemas}). There is no separate staleness type.
 Load {blockedStepFile} to complete with blocked status.
 
 ---

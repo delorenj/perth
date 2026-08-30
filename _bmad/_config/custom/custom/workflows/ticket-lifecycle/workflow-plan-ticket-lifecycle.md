@@ -30,7 +30,7 @@ Completed, QA-verified tickets with full audit trail in Plane. Each ticket progr
 - The Plane Captain agent is spawned on-demand only when AC is insufficient. Not a persistent agent.
 - Coding agents receive implementation tasks but Momo never writes code.
 - QA agent verifies each AC line item. Failures route back to coding agent with specific defect details.
-- Bloodbank event schemas exist at ~/code/33GOD/holyfields/schemas/agent/ (task.assigned, task.completed, message.sent).
+- The event vocabulary is discoverable via `bb contract`; registered schemas live in ~/code/33GOD/bloodbank/schemas/bloodbank/. This workflow publishes one family: bloodbank.repo.task.updated.
 - Plane integration via existing skill: managing-tickets-and-tasks-in-plane (API, label routing, ticket scoring).
 - The workflow must be universal: works with any project that has a `.plane.json` and Plane workspace registration.
 
@@ -50,22 +50,22 @@ ticket.backlog
       -> ticket.ready
     -> [AC sufficient] ticket.ready
   -> ticket.in-progress (Coding agent implementing)
-    -> [implementation discovers AC ambiguity] ticket.blocked (emit ticket.stale event)
+    -> [implementation discovers AC ambiguity] blocked (emit bloodbank.repo.task.updated, trigger_source: ticket-lifecycle-staleness)
   -> ticket.review (Tests passing, code complete)
   -> ticket.qa (QA agent verifying AC line-by-line)
-    -> [all AC verified] ticket.done (broadcast Bloodbank event with project_id)
+    -> [all AC verified] done (broadcast bloodbank.repo.task.updated with data.project_id)
     -> [AC items failed, retries < 3] ticket.in-progress (route back with per-item defect details)
-    -> [AC items failed, retries >= 3] ticket.blocked (emit ticket.stale event)
+    -> [AC items failed, retries >= 3] blocked (emit bloodbank.repo.task.updated, trigger_source: ticket-lifecycle-staleness)
   -> ticket.blocked (requires external intervention, staleness event broadcast)
 ```
 
 **Staleness Detection:**
-Each state has a max duration. If exceeded, the workflow emits a `ticket.stale` Bloodbank event with `project_id`, `ticket_id`, `stuck_state`, and `duration`. The workflow does not retry or escalate. Consumers decide.
+Each state has a max duration. If exceeded, the workflow emits a `bloodbank.repo.task.updated` event carrying `trigger_source: "ticket-lifecycle-staleness"` plus `project_id`, `ticket_id`, `stuck_state`, and `duration_minutes` in `data`. Staleness is not a separate event family — nothing ever published or consumed one. The workflow does not retry or escalate. Consumers decide.
 
 **Integration Points:**
 - Plane REST API (ticket CRUD, status transitions, label routing)
-- Bloodbank CLI at ~/code/33GOD/bloodbank/ (event publishing)
-- Holyfields schemas at ~/code/33GOD/holyfields/schemas/ (event contracts)
+- Bloodbank CLI `bb` / `bb-emit` on PATH (event publishing; there is no publish.sh)
+- Bloodbank schemas at ~/code/33GOD/bloodbank/schemas/bloodbank/ (event contracts); `bb contract` for the legal vocabulary
 - Plane skill at ~/.claude/skills/managing-tickets-and-tasks-in-plane/
 
 ## Classification Decisions
@@ -104,8 +104,8 @@ Each state has a max duration. If exceeded, the workflow emits a `ticket.stale` 
 **Inputs Required:**
 - Required: Ticket ID or Plane board context (workspace + project from `.plane.json`)
 - Required: Plane API access (via existing skill `managing-tickets-and-tasks-in-plane`)
-- Required: Bloodbank CLI access for event publishing (`~/code/33GOD/bloodbank/`)
-- Required: Holyfields event schemas (`~/code/33GOD/holyfields/schemas/`)
+- Required: Bloodbank CLI access for event publishing (`bb-emit` on PATH)
+- Required: Bloodbank event schemas (`~/code/33GOD/bloodbank/schemas/bloodbank/`)
 - Optional: Trigger mode context (human request, agent delegation, or Bloodbank event)
 - Precondition: `.plane.json` must exist in project root AND reference a workspace registered in `~/.claude/plane-workspaces.json`. If missing or malformed, workflow exits with a clear error (no silent failure).
 
@@ -139,7 +139,7 @@ If any criterion fails, route to Plane Captain for refinement.
 
 **Staleness Detection:**
 - Each state has a configurable max duration
-- On expiry: `ticket.stale` Bloodbank event with `project_id`, `ticket_id`, `stuck_state`, `duration`
+- On expiry: `bloodbank.repo.task.updated` with `trigger_source: "ticket-lifecycle-staleness"`, `project_id`, `ticket_id`, `stuck_state`, `duration_minutes`
 - Workflow does not retry or escalate. Consumers decide.
 
 **Concurrency Model:** (design-time concern)
@@ -172,7 +172,7 @@ If any criterion fails, route to Plane Captain for refinement.
 
 **LLM Features:**
 - **Web-Browsing:** Excluded - All data from Plane API + local repo
-- **File I/O:** Included - Reads `.plane.json`, coding agent writes code/tests, reads Holyfields schemas
+- **File I/O:** Included - Reads `.plane.json`, coding agent writes code/tests, reads Bloodbank schemas
 - **Sub-Agents:** Included - Core mechanism: spawns Plane Captain, Coding Agent, QA Agent as needed
 - **Sub-Processes:** Excluded - Single ticket per invocation, no parallelism needed
 
@@ -183,8 +183,8 @@ If any criterion fails, route to Plane Captain for refinement.
 
 **External Integrations:**
 - Plane REST API via existing skill (`managing-tickets-and-tasks-in-plane`)
-- Bloodbank CLI (`~/code/33GOD/bloodbank/`) for event publishing
-- Holyfields event schemas (`~/code/33GOD/holyfields/schemas/`) for event contracts
+- Bloodbank CLI (`bb-emit`) for event publishing
+- Bloodbank event schemas (`~/code/33GOD/bloodbank/schemas/bloodbank/`) for event contracts
 
 **Installation Requirements:**
 - None. All integrations already installed and available.
@@ -219,12 +219,12 @@ Phase 5: Review Gate
 Phase 6: QA Verification
 - Spawn QA Agent for line-item AC verification
 - Per-item pass/fail verdicts
-- All pass -> `done` + broadcast Bloodbank event
+- All pass -> `done` + broadcast `bloodbank.repo.task.updated`
 - Any fail (retries < 3) -> back to Phase 4 with defect details
 - Any fail (retries >= 3) -> `blocked` + staleness event
 
 Phase 7: Completion
-- Broadcast `ticket.state_changed` event with `project_id`
+- Broadcast `bloodbank.repo.task.updated` with `data.project_id`
 - Post structured audit comment to Plane
 
 ## Workflow Design
@@ -294,7 +294,7 @@ step-06-qa
   fail + retries >= 3: -> step-07 (blocked)
 
 step-07-complete
-  broadcasts: ticket.state_changed Bloodbank event
+  broadcasts: bloodbank.repo.task.updated
   posts: structured audit comment to Plane
   end
 ```
@@ -308,7 +308,7 @@ ticket-lifecycle/
 ├── data/
 │   ├── ac-sufficiency-rubric.md   # 4-criteria AC evaluation rubric
 │   ├── audit-comment-template.md  # Structured comment format for Plane
-│   └── event-schemas.md           # Bloodbank event payload references
+│   └── event-schemas.md           # Bloodbank event contract + data payloads
 ├── steps-c/
 │   ├── step-01-init.md
 │   ├── step-02-triage.md
@@ -343,4 +343,4 @@ Workflow orchestrator. Reads state, evaluates rubrics, spawns agents, transition
 - step-02-triage: Rubric is deterministic (4 binary criteria)
 - step-04-implement: AC ambiguity -> blocked state
 - step-06-qa: Max 3 retries, then blocked
-- All steps: Staleness timer, ticket.stale event on timeout
+- All steps: Staleness timer, bloodbank.repo.task.updated (trigger_source: ticket-lifecycle-staleness) on timeout

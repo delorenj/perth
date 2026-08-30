@@ -92,22 +92,39 @@ lifecycle:
 
 ### 3. Broadcast Terminal Event
 
-Using {eventSchemas}, broadcast the final Bloodbank event:
+Using {eventSchemas}, broadcast the final Bloodbank event. The type is
+`bloodbank.repo.task.updated`; `bb emit` builds the envelope, so publish only
+`data`:
+
+```bash
+bb emit --check --type bloodbank.repo.task.updated   # rc=1 if illegal — abort
+```
 
 ```json
 {
-  "event_type": "ticket.state_changed",
-  "version": "v1",
-  "payload": {
-    "project_id": "{project_id}",
-    "ticket_id": "{ticket_id}",
-    "previous_state": "{previous_state}",
-    "new_state": "{terminal_state}",
-    "trigger_source": "ticket-lifecycle-workflow",
-    "terminal": true
-  }
+  "repo": "{repo}",
+  "slug": "{project_slug}",
+  "workspace": "{ticket_provider.workspace}",
+  "board_id": "{ticket_provider.board_id}",
+  "project_id": "{project_id}",
+  "ticket_id": "{ticket_id}",
+  "ticket_key": "{ticket_key}",
+  "title": "{ticket_title}",
+  "provider": "{ticket_provider.type}",
+  "provider_event_type": "ticket-lifecycle.transitioned",
+  "previous_phase": "{previous_state}",
+  "phase": "{terminal_state}",
+  "changed_fields": ["state"],
+  "trigger_source": "ticket-lifecycle-workflow",
+  "terminal": true,
+  "timestamp": "{ISO 8601}",
+  "ticket": { "…": "lossless provider ticket JSON" }
 }
 ```
+
+Do NOT add a `version` field and do NOT wrap the payload in `event_type` /
+`payload` — versioning lives in `schemaref`/`dataschema`, which the emitter
+derives.
 
 ### 4. Exit Workflow
 
@@ -127,7 +144,7 @@ Report final status:
 ### SUCCESS:
 
 - Final audit summary posted with full lifecycle details
-- Terminal Bloodbank event broadcast with `terminal: true`
+- Terminal `bloodbank.repo.task.updated` broadcast with `data.terminal: true`
 - Clean exit with status report
 - Both "done" and "blocked" paths handled
 

@@ -1,6 +1,6 @@
 ---
 name: 'step-v-01-validate'
-description: 'Validate all workflow prerequisites: Plane config, Bloodbank CLI, Holyfields schemas, and workflow configuration'
+description: 'Validate all workflow prerequisites: Plane config, Bloodbank CLI, event naming contract, and workflow configuration'
 
 workflowConfig: '../workflow.yaml'
 acRubric: '../data/ac-sufficiency-rubric.md'
@@ -57,21 +57,25 @@ To verify that all external dependencies, configuration files, and tooling requi
 ### 2. Validate Bloodbank CLI
 
 **Check Bloodbank installation:**
-- [ ] Directory exists at `~/code/33GOD/bloodbank/`
-- [ ] CLI is executable (check for main entry point)
+- [ ] `bb` is on PATH (`bb contract` prints the naming vocabulary)
+- [ ] `bb-emit` is on PATH (this is the emitter; there is no `publish.sh`)
 
 **Check Bloodbank connectivity:**
-- [ ] Attempt a health check or connection test to RabbitMQ
+- [ ] `bb doctor` reports a usable local scaffold
 
-### 3. Validate Holyfields Schemas
+### 3. Validate the Event Naming Contract
 
-**Check schema registry:**
-- [ ] Directory exists at `~/code/33GOD/holyfields/schemas/`
-- [ ] Contains event schema definitions
+The contract is discoverable. Do not read allowlists out of source files, and do
+not accept a type that has not been checked.
 
-**Verify required event types exist:**
-- [ ] `ticket.state_changed` schema present or documentable
-- [ ] `ticket.stale` schema present or documentable
+**Verify the type this workflow publishes is legal:**
+- [ ] `bb emit --check --type bloodbank.repo.task.updated` exits 0 and prints PASS
+- [ ] The registered schema exists at
+      `~/code/33GOD/bloodbank/schemas/bloodbank/repo/task.updated.json`
+
+**Verify no illegal literal survives in the workflow:**
+- [ ] No step file contains a `"version"` envelope field
+- [ ] No step file names a type outside `bloodbank.<domain>.<entity>.<action>`
 
 ### 4. Validate Workflow Configuration
 
@@ -88,8 +92,9 @@ To verify that all external dependencies, configuration files, and tooling requi
 
 **Check {eventSchemas}:**
 - [ ] File exists
-- [ ] Documents `ticket.state_changed` payload
-- [ ] Documents `ticket.stale` payload
+- [ ] Documents the `bloodbank.repo.task.updated` state-transition payload
+- [ ] Documents the `bloodbank.repo.task.updated` staleness-report payload
+- [ ] Every type literal in it passes `bb emit --check --type <literal>`
 
 ### 5. Present Validation Report
 
@@ -107,11 +112,11 @@ Plane Configuration:
 
 Bloodbank:
   CLI installation ........... [PASS/FAIL]
-  RabbitMQ connectivity ...... [PASS/FAIL]
+  bb doctor .................. [PASS/FAIL]
 
-Holyfields:
-  Schema registry ............ [PASS/FAIL]
-  Required event schemas ..... [PASS/FAIL]
+Event Naming Contract:
+  bb emit --check ............ [PASS/FAIL]
+  Registered schema present .. [PASS/FAIL]
 
 Workflow Configuration:
   workflow.yaml .............. [PASS/FAIL]
@@ -138,7 +143,7 @@ For each failure, provide:
 
 ### SUCCESS:
 
-- All prerequisite categories checked (Plane, Bloodbank, Holyfields, Config)
+- All prerequisite categories checked (Plane, Bloodbank, event contract, Config)
 - Every check item evaluated even if others fail
 - Clear pass/fail report with remediation steps for failures
 - No files or state modified during validation

@@ -56,6 +56,10 @@ For each confirmed change from step E1:
 **If modifying event schemas:**
 - Read {eventSchemas}
 - Apply schema changes
+- **Before writing:** run `bb emit --check --type <literal>` for EVERY event type
+  literal in the result. rc=1 means the name is not in the contract — do not
+  write the file; report the failure and stop. Never add a `version` envelope
+  field, and never put a repo, agent, or ticket identifier in a type token.
 - Write updated file
 
 ### 2. Verify Changes
@@ -76,10 +80,12 @@ Present a summary of all changes applied:
 
 ### SUCCESS:
 - All confirmed changes applied to correct files
+- Every event type literal validated with `bb emit --check` before writing
 - Each change verified after application
 - Summary presented with before/after values
 
 ### FAILURE:
 - Applying unconfirmed changes
+- Writing an event type that `bb emit --check` refuses
 - Modifying wrong files
 - Not verifying changes after application

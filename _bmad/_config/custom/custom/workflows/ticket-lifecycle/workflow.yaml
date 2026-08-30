@@ -21,8 +21,12 @@ staleness:
   qa: 60
 
 # Bloodbank Event Configuration
+# The type is fixed by the Bloodbank naming contract (`bb contract`). Changing
+# it requires a name that `bb emit --check --type <name>` accepts, and a
+# registered schema under bloodbank/schemas/. There is no `version` field:
+# versioning lives in schemaref/dataschema, which bb-emit derives.
 events:
-  topic_prefix: "ticket"
+  type: "bloodbank.repo.task.updated"
   include_project_id: true
   include_ticket_id: true
 

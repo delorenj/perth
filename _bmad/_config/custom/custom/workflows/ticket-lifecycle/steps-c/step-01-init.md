@@ -5,6 +5,7 @@ description: 'Resolve project context, validate preconditions, and acquire ticke
 nextStepFile: './step-02-triage.md'
 workflowConfig: '../workflow.yaml'
 planeSkill: '~/.claude/skills/managing-tickets-and-tasks-in-plane/'
+eventSchemas: '../data/event-schemas.md'
 ---
 
 # Step 1: Initialize and Acquire Ticket
@@ -77,8 +78,8 @@ Using the `workspace_slug` from `.plane.json`, verify it exists in `~/.claude/pl
 
 Verify availability of:
 
-1. **Bloodbank CLI:** Check that `~/code/33GOD/bloodbank/` exists and the publish script is accessible.
-2. **Holyfields schemas:** Check that `~/code/33GOD/holyfields/schemas/agent/` contains expected event schema files.
+1. **Bloodbank CLI:** Check that `bb` and `bb-emit` are on PATH. `bb-emit` is the emitter — there is no `publish.sh`.
+2. **Event naming contract:** Check that `bb emit --check --type bloodbank.repo.task.updated` exits 0.
 
 **If any dependency is missing:**
 - EXIT with error listing which dependencies are unavailable and how to resolve them.
@@ -130,18 +131,25 @@ reason: Ticket acquired for lifecycle processing
 
 Update the ticket status to the triage state (per {workflowConfig} state mapping).
 
-Broadcast Bloodbank event:
+Broadcast the Bloodbank event — type `bloodbank.repo.task.updated`, per
+{eventSchemas}. `bb emit` builds the envelope; publish only `data`:
+
 ```json
 {
-  "event_type": "ticket.state_changed",
-  "version": "v1",
-  "payload": {
-    "project_id": "{project_id}",
-    "ticket_id": "{ticket_id}",
-    "previous_state": "{current_state}",
-    "new_state": "triage",
-    "trigger_source": "ticket-lifecycle-workflow"
-  }
+  "repo": "{repo}",
+  "slug": "{project_slug}",
+  "workspace": "{ticket_provider.workspace}",
+  "board_id": "{ticket_provider.board_id}",
+  "project_id": "{project_id}",
+  "ticket_id": "{ticket_id}",
+  "provider": "{ticket_provider.type}",
+  "provider_event_type": "ticket-lifecycle.transitioned",
+  "previous_phase": "{current_state}",
+  "phase": "triage",
+  "changed_fields": ["state"],
+  "trigger_source": "ticket-lifecycle-workflow",
+  "timestamp": "{ISO 8601}",
+  "ticket": { "…": "lossless provider ticket JSON" }
 }
 ```
 
@@ -156,7 +164,7 @@ Immediately load, read entire file, then execute {nextStepFile}.
 ### SUCCESS:
 
 - Project context resolved from `.plane.json` + workspace config
-- All preconditions validated (Plane API, Bloodbank, Holyfields)
+- All preconditions validated (Plane API, Bloodbank CLI, event contract)
 - Ticket acquired (by ID or scoring algorithm)
 - Ticket context captured (ID, title, AC, status, metadata)
 - Ticket transitioned to triage state with audit comment

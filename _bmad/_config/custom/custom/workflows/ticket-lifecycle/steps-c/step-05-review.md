@@ -5,6 +5,7 @@ description: 'Validate tests pass and coverage maps to AC items before QA'
 nextStepFile: './step-06-qa.md'
 retryStepFile: './step-04-implement.md'
 auditCommentTemplate: '../data/audit-comment-template.md'
+eventSchemas: '../data/event-schemas.md'
 ---
 
 # Step 5: Review Gate
@@ -95,7 +96,7 @@ details:
 ```
 
 Update ticket status to qa.
-Broadcast Bloodbank event with `new_state: "qa"`.
+Broadcast `bloodbank.repo.task.updated` with `phase: "qa"` (see {eventSchemas}).
 
 **Proceeding to QA verification...**
 Immediately load, read entire file, then execute {nextStepFile}.
@@ -119,7 +120,7 @@ details:
 ```
 
 Update ticket status back to in_progress.
-Broadcast Bloodbank event with `new_state: "in_progress"`.
+Broadcast `bloodbank.repo.task.updated` with `phase: "in_progress"` (see {eventSchemas}).
 
 **Routing back to implementation with review failures...**
 Immediately load, read entire file, then execute {retryStepFile}.

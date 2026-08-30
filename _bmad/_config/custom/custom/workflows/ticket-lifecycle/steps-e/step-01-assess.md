@@ -56,7 +56,9 @@ Read {workflowConfig} and present all configurable values:
 - Present current state name mappings
 
 **Event Configuration:**
-- Load {eventSchemas} and summarize event types
+- Load {eventSchemas} and summarize the event type it publishes
+- State that the type is fixed by the Bloodbank naming contract: it can only be
+  changed to another name that `bb emit --check --type <name>` accepts
 
 ### 2. Present Modification Options
 
@@ -67,7 +69,7 @@ Configurable areas:
 2. **QA Retry Limit** - Change max retry count
 3. **Staleness Durations** - Adjust per-state timeout thresholds
 4. **State Mapping** - Change Plane status names
-5. **Event Schemas** - Modify Bloodbank event payloads
+5. **Event Schemas** - Modify Bloodbank event `data` payloads (the type name is contract-bound)
 6. **Audit Comment Format** - Change comment template structure
 
 Tell me which area(s) you want to modify and what changes you need."
