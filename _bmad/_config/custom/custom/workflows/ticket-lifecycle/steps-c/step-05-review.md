@@ -79,7 +79,7 @@ Compare current test results against the baseline:
 
 **IF ALL PASS:**
 
-Post audit comment using {auditCommentTemplate}:
+Audit comment ({auditCommentTemplate}); the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -95,15 +95,15 @@ details:
 ---
 ```
 
-Update ticket status to qa.
-Broadcast `bloodbank.repo.task.updated` with `phase: "qa"` (see {eventSchemas}).
+Move the ticket to qa and post that comment with it: `px move {ticket_id} "{states.qa}" -m "<audit comment>" --json`.
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for this move (see {eventSchemas}).
 
 **Proceeding to QA verification...**
 Immediately load, read entire file, then execute {nextStepFile}.
 
 **IF ANY FAIL:**
 
-Post audit comment:
+Audit comment; the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -119,8 +119,8 @@ details:
 ---
 ```
 
-Update ticket status back to in_progress.
-Broadcast `bloodbank.repo.task.updated` with `phase: "in_progress"` (see {eventSchemas}).
+Move the ticket back to in_progress and post that comment with it: `px move {ticket_id} "{states.in_progress}" -m "<audit comment>" --json`.
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for this move (see {eventSchemas}).
 
 **Routing back to implementation with review failures...**
 Immediately load, read entire file, then execute {retryStepFile}.

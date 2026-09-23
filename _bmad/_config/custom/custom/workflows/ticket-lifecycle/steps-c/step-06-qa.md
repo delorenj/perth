@@ -104,7 +104,7 @@ For each AC item:
 
 **IF ALL AC ITEMS PASS:**
 
-Post audit comment using {auditCommentTemplate}:
+Audit comment ({auditCommentTemplate}); the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -120,15 +120,15 @@ details:
 ---
 ```
 
-Update ticket status to done.
-Broadcast `bloodbank.repo.task.updated` with `phase: "done"` (see {eventSchemas}).
+Move the ticket to done and post that comment with it: `px move {ticket_id} "{states.done}" -m "<audit comment>" --json`.
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for this move (see {eventSchemas}).
 
 **Proceeding to completion...**
 Immediately load, read entire file, then execute {doneStepFile}.
 
 **IF ANY ITEMS FAIL AND retry_count < max_retries:**
 
-Post audit comment:
+Audit comment; the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -147,15 +147,15 @@ details:
 ---
 ```
 
-Update ticket status to in_progress.
-Broadcast `bloodbank.repo.task.updated` with `phase: "in_progress"` (see {eventSchemas}).
+Move the ticket to in_progress and post that comment with it: `px move {ticket_id} "{states.in_progress}" -m "<audit comment>" --json`.
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for this move (see {eventSchemas}).
 
 **Routing back to implementation with defect details...**
 Immediately load, read entire file, then execute {retryStepFile}.
 
 **IF ANY ITEMS FAIL AND retry_count >= max_retries:**
 
-Post audit comment:
+Audit comment; the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -170,8 +170,8 @@ details:
 ---
 ```
 
-Update ticket status to blocked.
-Broadcast `bloodbank.repo.task.updated` with `trigger_source: "ticket-lifecycle-staleness"`, `phase: "blocked"`, and the full failure history in `data` (see {eventSchemas}). There is no separate staleness type.
+Move the ticket to blocked and post that comment with it: `px move {ticket_id} "{states.blocked}" -m "<audit comment>" --json`.
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for the move to blocked; the failure history lives in the audit comment above (see {eventSchemas}).
 
 **Ticket blocked. Exiting to completion...**
 Immediately load, read entire file, then execute {doneStepFile}.

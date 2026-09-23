@@ -83,7 +83,7 @@ SUFFICIENT = non_empty AND testable AND enumerated AND fr_coverage
 
 **IF SUFFICIENT (all 4 criteria pass):**
 
-Post audit comment to Plane using {auditCommentTemplate}:
+Audit comment ({auditCommentTemplate}); the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -95,17 +95,16 @@ reason: AC passed sufficiency rubric (4/4 criteria met)
 ---
 ```
 
-Update ticket status to ready state.
+Move the ticket to ready and post that comment with it: `px move {ticket_id} "{states.ready}" -m "<audit comment>" --json`.
 
-Broadcast the Bloodbank event — type `bloodbank.repo.task.updated`, `data`
-shaped per {eventSchemas}, with `previous_phase: "triage"` and `phase: "ready"`.
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for this move (see {eventSchemas}).
 
 **Proceeding to implementation...**
 Immediately load, read entire file, then execute {nextStepFile}.
 
 **IF INSUFFICIENT (any criterion fails):**
 
-Post audit comment to Plane:
+Audit comment; the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -120,9 +119,9 @@ details:
 ---
 ```
 
-Update ticket status to refining state.
+Move the ticket to refining and post that comment with it: `px move {ticket_id} "{states.refining}" -m "<audit comment>" --json`.
 
-Broadcast `bloodbank.repo.task.updated` with `phase: "refining"` (see {eventSchemas}).
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for this move (see {eventSchemas}).
 
 **Proceeding to AC refinement...**
 Immediately load, read entire file, then execute {refineStepFile}.
@@ -137,7 +136,7 @@ Immediately load, read entire file, then execute {refineStepFile}.
 - Complete evidence recorded for each criterion
 - Correct branch taken based on evaluation result
 - Audit comment posted with full evaluation details
-- Bloodbank event broadcast
+- No `repo.task.*` event emitted by the workflow (the Plane webhook publishes each move)
 
 ### FAILURE:
 

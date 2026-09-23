@@ -37,7 +37,7 @@ To resolve the project's Plane workspace context, validate all preconditions for
 
 ## EXECUTION PROTOCOLS:
 
-- Resolve project context from `.plane.json` + workspace config.
+- Resolve project context from the `ticket_provider` block in `.project.json` + workspace config.
 - Load Plane skill for API patterns.
 - Load workflow config for state mapping and staleness durations.
 - Acquire ticket (by ID if provided, or via scoring algorithm).
@@ -46,7 +46,7 @@ To resolve the project's Plane workspace context, validate all preconditions for
 
 - This is step 1. No prior context exists.
 - Focus: project identification, workspace resolution, ticket selection.
-- Dependencies: `.plane.json` must exist, Plane API must be accessible.
+- Dependencies: `.project.json` must exist and contain a `ticket_provider` block with a non-empty `board_id`, Plane API must be accessible.
 
 ## MANDATORY SEQUENCE
 
@@ -54,18 +54,18 @@ To resolve the project's Plane workspace context, validate all preconditions for
 
 ### 1. Resolve Project Context
 
-Search for `.plane.json` in the current project root.
+Search for `.project.json` in the current project root.
 
 **If found:**
-- Read and parse `.plane.json` to extract `workspace_slug` and `project_id`.
+- Read and parse `.project.json` and extract the `ticket_provider` block, reading `ticket_provider.workspace` and `ticket_provider.board_id`.
 - Load `~/.claude/plane-workspaces.json` to resolve API endpoint and credentials for this workspace.
 
-**If NOT found:**
-- EXIT with error: "PRECONDITION FAILED: No .plane.json found in project root. This workflow requires a Plane-integrated project. Create .plane.json with workspace_slug and project_id."
+**If NOT found (or no `ticket_provider` block / empty `board_id`):**
+- EXIT with error: "PRECONDITION FAILED: No .project.json with a ticket_provider block found in project root. This workflow requires a Plane-integrated project. Ensure .project.json contains a ticket_provider block with workspace and a non-empty board_id."
 
 ### 2. Validate Workspace Registration
 
-Using the `workspace_slug` from `.plane.json`, verify it exists in `~/.claude/plane-workspaces.json`.
+Using `ticket_provider.workspace` from `.project.json`, verify it exists in `~/.claude/plane-workspaces.json`.
 
 **If registered:**
 - Extract API base URL, API key reference, and workspace ID.
@@ -78,8 +78,10 @@ Using the `workspace_slug` from `.plane.json`, verify it exists in `~/.claude/pl
 
 Verify availability of:
 
-1. **Bloodbank CLI:** Check that `bb` and `bb-emit` are on PATH. `bb-emit` is the emitter — there is no `publish.sh`.
-2. **Event naming contract:** Check that `bb emit --check --type bloodbank.repo.task.updated` exits 0.
+1. **Ticket writer:** `px` (Pilot >= 0.2.0) is on PATH, `px whoami --json` resolves this repo's board, and `px --help` lists `move`. `px` is the one Plane writer; every state move in this workflow is a `px move` (see {eventSchemas}).
+
+This workflow publishes no Bloodbank events, so it needs no `bb-emit`: ticket
+facts come only from the Plane webhook normalizer (see {eventSchemas}).
 
 **If any dependency is missing:**
 - EXIT with error listing which dependencies are unavailable and how to resolve them.
@@ -117,7 +119,7 @@ Extract from the selected ticket:
 
 ### 7. Transition to Triage
 
-Post an audit comment to the Plane ticket:
+Audit comment; the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -129,29 +131,11 @@ reason: Ticket acquired for lifecycle processing
 ---
 ```
 
-Update the ticket status to the triage state (per {workflowConfig} state mapping).
+Move the ticket to triage and post that comment with it: `px move {ticket_id} "{states.triage}" -m "<audit comment>" --json`.
 
-Broadcast the Bloodbank event — type `bloodbank.repo.task.updated`, per
-{eventSchemas}. `bb emit` builds the envelope; publish only `data`:
-
-```json
-{
-  "repo": "{repo}",
-  "slug": "{project_slug}",
-  "workspace": "{ticket_provider.workspace}",
-  "board_id": "{ticket_provider.board_id}",
-  "project_id": "{project_id}",
-  "ticket_id": "{ticket_id}",
-  "provider": "{ticket_provider.type}",
-  "provider_event_type": "ticket-lifecycle.transitioned",
-  "previous_phase": "{current_state}",
-  "phase": "triage",
-  "changed_fields": ["state"],
-  "trigger_source": "ticket-lifecycle-workflow",
-  "timestamp": "{ISO 8601}",
-  "ticket": { "…": "lossless provider ticket JSON" }
-}
-```
+Emit nothing. The Plane webhook normalizer (n8n `Plane → Bloodbank`) publishes
+`bloodbank.repo.task.updated` for this move (see {eventSchemas}); a hand-written
+copy from the workflow would be a duplicate fact.
 
 **Proceeding to triage...**
 
@@ -163,19 +147,19 @@ Immediately load, read entire file, then execute {nextStepFile}.
 
 ### SUCCESS:
 
-- Project context resolved from `.plane.json` + workspace config
-- All preconditions validated (Plane API, Bloodbank CLI, event contract)
+- Project context resolved from the `ticket_provider` block in `.project.json` + workspace config
+- All preconditions validated (Plane API, `px`)
 - Ticket acquired (by ID or scoring algorithm)
 - Ticket context captured (ID, title, AC, status, metadata)
 - Ticket transitioned to triage state with audit comment
-- Bloodbank event broadcast
+- No `repo.task.*` event emitted by the workflow (the Plane webhook publishes each move)
 
 ### FAILURE:
 
 - Proceeding without validating preconditions
-- Silently failing on missing `.plane.json` or workspace
+- Silently failing on missing `.project.json` / `ticket_provider` block or workspace
 - Not posting audit comment at state transition
-- Not broadcasting Bloodbank event
+- Emitting `bloodbank.repo.task.*` yourself (the Plane webhook is its only producer)
 - Attempting to evaluate AC in this step (that's step 2)
 
 **Master Rule:** Exit immediately on precondition failure. Never proceed with incomplete context.

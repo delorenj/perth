@@ -1,6 +1,6 @@
 ---
 name: 'step-07-complete'
-description: 'Broadcast completion event, post final audit comment, and exit workflow'
+description: 'Post final audit comment and exit workflow; the Plane webhook already published the terminal move'
 
 auditCommentTemplate: '../data/audit-comment-template.md'
 eventSchemas: '../data/event-schemas.md'
@@ -10,7 +10,7 @@ eventSchemas: '../data/event-schemas.md'
 
 ## STEP GOAL:
 
-To broadcast the final Bloodbank event, post the closing audit comment to Plane, and exit the workflow.
+To post the closing audit comment to Plane and exit the workflow. The terminal move (done or blocked) was already published as `bloodbank.repo.task.updated` by the Plane webhook when the previous step wrote it; this step emits nothing.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -33,13 +33,13 @@ To broadcast the final Bloodbank event, post the closing audit comment to Plane,
 ## EXECUTION PROTOCOLS:
 
 - Post final audit comment summarizing the full lifecycle.
-- Broadcast terminal Bloodbank event.
+- Emit no Bloodbank event (the Plane webhook is the only producer of ticket facts).
 - Exit cleanly.
 
 ## CONTEXT BOUNDARIES:
 
 - Previous step set the terminal state (done or blocked).
-- Focus: audit trail completion and event broadcasting.
+- Focus: audit trail completion.
 - This is the final step. No next step.
 
 ## MANDATORY SEQUENCE
@@ -54,7 +54,10 @@ Check the ticket's current state (set by the previous step):
 
 ### 2. Post Final Audit Summary
 
-Post a summary audit comment to Plane using {auditCommentTemplate}:
+Post a summary audit comment using {auditCommentTemplate}. The ticket is already
+in its terminal lane, so the same command posts only the comment (px sees the
+lane is unchanged and skips the PATCH):
+`px move {ticket_id} "{states.done}" -m "<summary>" --json` (or `"{states.blocked}"`).
 
 **For "done" state:**
 ```
@@ -90,41 +93,14 @@ lifecycle:
 ---
 ```
 
-### 3. Broadcast Terminal Event
+### 3. Emit Nothing
 
-Using {eventSchemas}, broadcast the final Bloodbank event. The type is
-`bloodbank.repo.task.updated`; `bb emit` builds the envelope, so publish only
-`data`:
-
-```bash
-bb emit --check --type bloodbank.repo.task.updated   # rc=1 if illegal — abort
-```
-
-```json
-{
-  "repo": "{repo}",
-  "slug": "{project_slug}",
-  "workspace": "{ticket_provider.workspace}",
-  "board_id": "{ticket_provider.board_id}",
-  "project_id": "{project_id}",
-  "ticket_id": "{ticket_id}",
-  "ticket_key": "{ticket_key}",
-  "title": "{ticket_title}",
-  "provider": "{ticket_provider.type}",
-  "provider_event_type": "ticket-lifecycle.transitioned",
-  "previous_phase": "{previous_state}",
-  "phase": "{terminal_state}",
-  "changed_fields": ["state"],
-  "trigger_source": "ticket-lifecycle-workflow",
-  "terminal": true,
-  "timestamp": "{ISO 8601}",
-  "ticket": { "…": "lossless provider ticket JSON" }
-}
-```
-
-Do NOT add a `version` field and do NOT wrap the payload in `event_type` /
-`payload` — versioning lives in `schemaref`/`dataschema`, which the emitter
-derives.
+There is no terminal event to send. The previous step moved the ticket to
+`done` or `blocked` with `px`, and the Plane webhook normalizer (n8n
+`Plane → Bloodbank`) already published that move as
+`bloodbank.repo.task.updated`. The summary comment you just posted reaches the
+bus as `bloodbank.repo.task.appended`. Do not call `bb emit` for any
+`repo.task.*` or `repo.board.*` type (see {eventSchemas}).
 
 ### 4. Exit Workflow
 
@@ -144,14 +120,14 @@ Report final status:
 ### SUCCESS:
 
 - Final audit summary posted with full lifecycle details
-- Terminal `bloodbank.repo.task.updated` broadcast with `data.terminal: true`
+- No `repo.task.*` event emitted by the workflow (the Plane webhook published the terminal move)
 - Clean exit with status report
 - Both "done" and "blocked" paths handled
 
 ### FAILURE:
 
 - Exiting without posting final audit summary
-- Not broadcasting terminal event
+- Emitting a terminal `bloodbank.repo.task.*` event yourself (a duplicate of the webhook's fact)
 - Attempting further state transitions after completion
 - Missing lifecycle details in summary
 

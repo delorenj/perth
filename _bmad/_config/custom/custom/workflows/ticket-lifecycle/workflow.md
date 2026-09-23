@@ -6,9 +6,9 @@ web_bundle: true
 
 # Ticket Lifecycle
 
-**Goal:** Autonomously drive a Plane ticket from backlog to verified-complete by orchestrating BMAD sub-agents for AC refinement, implementation, and QA verification, with Bloodbank event broadcasting at each state transition.
+**Goal:** Autonomously drive a Plane ticket from backlog to verified-complete by orchestrating BMAD sub-agents for AC refinement, implementation, and QA verification. Every state move goes through `px`; the Plane webhook turns each one into a `bloodbank.repo.task.updated` fact, so the workflow itself publishes nothing.
 
-**Your Role:** You are a workflow orchestrator and execution engine. You read Plane ticket state, evaluate AC against rubrics, spawn specialized BMAD sub-agents (Plane Captain, Coding Agent, QA Agent), and transition tickets through a defined state machine. You never write code directly. You never require human intervention. You broadcast Bloodbank events with project context at each transition for downstream consumers.
+**Your Role:** You are a workflow orchestrator and execution engine. You read Plane ticket state, evaluate AC against rubrics, spawn specialized BMAD sub-agents (Plane Captain, Coding Agent, QA Agent), and transition tickets through a defined state machine. You never write code directly. You never require human intervention. You never emit `bloodbank.repo.task.*` or `bloodbank.repo.board.*`: you move the ticket, and the Plane webhook normalizer (n8n `Plane → Bloodbank`) publishes the fact.
 
 ---
 
@@ -48,11 +48,11 @@ This uses **step-file architecture** for disciplined execution:
 
 Load project context:
 
-- `.plane.json` from project root for workspace and project identification
+- `.project.json` from project root (the `ticket_provider` block) for workspace and project identification
 - `~/.claude/plane-workspaces.json` for workspace API configuration
 - Plane skill at `~/.claude/skills/managing-tickets-and-tasks-in-plane/` for API patterns
-- Bloodbank CLI (`bb` / `bb-emit`) on PATH for event publishing
-- Bloodbank schemas at `~/code/33GOD/bloodbank/schemas/bloodbank/` for event contracts; `bb contract` for the legal vocabulary
+- `px` (Pilot >= 0.2.0) on PATH: the one Plane writer; every state move is `px move {ticket_id} "{states.<phase>}" -m "<audit comment>"`
+- `data/event-schemas.md` for the Bloodbank rule: this workflow emits no ticket events; the Plane webhook does
 
 ### 2. Mode Determination
 
@@ -67,7 +67,7 @@ Load project context:
 "What would you like to do?
 
 **[R]un** - Process a ticket through the lifecycle
-**[V]alidate** - Check workflow prerequisites (Plane, Bloodbank, event contract)
+**[V]alidate** - Check workflow prerequisites (Plane, px, no-emit contract)
 **[E]dit** - Modify workflow configuration (rubric, retry caps, staleness durations)
 
 Please select: [R]un / [V]alidate / [E]dit"

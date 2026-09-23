@@ -15,10 +15,10 @@ workflowName: ticket-lifecycle
 ## Discovery Notes
 
 **User's Vision:**
-A fully autonomous, multi-agent ticket lifecycle workflow that takes a Plane board ticket from raw backlog to verified-complete with zero human intervention. Momo (OpenClaw PM agent) orchestrates via Bloodbank events, delegating to BMAD agents for AC refinement, development, and QA validation. Universal across all projects.
+A fully autonomous, multi-agent ticket lifecycle workflow that takes a Plane board ticket from raw backlog to verified-complete with zero human intervention. Momo (OpenClaw PM agent) orchestrates by moving the ticket through `px`, delegating to BMAD agents for AC refinement, development, and QA validation. Universal across all projects.
 
 **Who It's For:**
-Momo (the PM/orchestrator agent) triggers or receives triggers for this workflow. BMAD agents execute the individual phases. The workflow is project-agnostic, resolving project context via `.plane.json` + workspace detection.
+Momo (the PM/orchestrator agent) triggers or receives triggers for this workflow. BMAD agents execute the individual phases. The workflow is project-agnostic, resolving project context via the `ticket_provider` block in `.project.json` + workspace detection.
 
 **What It Produces:**
 Completed, QA-verified tickets with full audit trail in Plane. Each ticket progresses through a defined state machine with clear handoffs between agent roles.
@@ -30,14 +30,14 @@ Completed, QA-verified tickets with full audit trail in Plane. Each ticket progr
 - The Plane Captain agent is spawned on-demand only when AC is insufficient. Not a persistent agent.
 - Coding agents receive implementation tasks but Momo never writes code.
 - QA agent verifies each AC line item. Failures route back to coding agent with specific defect details.
-- The event vocabulary is discoverable via `bb contract`; registered schemas live in ~/code/33GOD/bloodbank/schemas/bloodbank/. This workflow publishes one family: bloodbank.repo.task.updated.
+- Agents never emit `bloodbank.repo.task.*` / `repo.board.*`. The Plane webhook normalizer (n8n `Plane → Bloodbank`) publishes `bloodbank.repo.task.updated` for every transition this workflow writes through `px`, and `repo.task.appended` for every audit comment. This workflow publishes no ticket events.
 - Plane integration via existing skill: managing-tickets-and-tasks-in-plane (API, label routing, ticket scoring).
-- The workflow must be universal: works with any project that has a `.plane.json` and Plane workspace registration.
+- The workflow must be universal: works with any project that has a `ticket_provider` block in `.project.json` and Plane workspace registration.
 
 **Agent Roster:**
 | Agent | Type | Role | Communication |
 |-------|------|------|---------------|
-| Momo | OpenClaw | PM/Orchestrator | Bloodbank events (send/receive) |
+| Momo | OpenClaw | PM/Orchestrator | moves tickets via `px`; receives Bloodbank facts |
 | Plane Captain | BMAD | AC Refinement | Spawned by workflow, reads/writes Plane API |
 | Coding Agent | BMAD | Implementation | Spawned by workflow, writes code + tests |
 | QA Agent | BMAD | AC Verification | Spawned by workflow, reads Plane AC, validates |
@@ -50,22 +50,22 @@ ticket.backlog
       -> ticket.ready
     -> [AC sufficient] ticket.ready
   -> ticket.in-progress (Coding agent implementing)
-    -> [implementation discovers AC ambiguity] blocked (emit bloodbank.repo.task.updated, trigger_source: ticket-lifecycle-staleness)
+    -> [implementation discovers AC ambiguity] blocked (move via px + audit comment; the webhook publishes repo.task.updated)
   -> ticket.review (Tests passing, code complete)
   -> ticket.qa (QA agent verifying AC line-by-line)
-    -> [all AC verified] done (broadcast bloodbank.repo.task.updated with data.project_id)
+    -> [all AC verified] done (move via px; the webhook publishes repo.task.updated)
     -> [AC items failed, retries < 3] ticket.in-progress (route back with per-item defect details)
-    -> [AC items failed, retries >= 3] blocked (emit bloodbank.repo.task.updated, trigger_source: ticket-lifecycle-staleness)
-  -> ticket.blocked (requires external intervention, staleness event broadcast)
+    -> [AC items failed, retries >= 3] blocked (move via px + audit comment; the webhook publishes repo.task.updated)
+  -> ticket.blocked (requires external intervention; reason lives in the audit comment)
 ```
 
 **Staleness Detection:**
-Each state has a max duration. If exceeded, the workflow emits a `bloodbank.repo.task.updated` event carrying `trigger_source: "ticket-lifecycle-staleness"` plus `project_id`, `ticket_id`, `stuck_state`, and `duration_minutes` in `data`. Staleness is not a separate event family — nothing ever published or consumed one. The workflow does not retry or escalate. Consumers decide.
+Each state has a max duration. If exceeded, the workflow moves the ticket to `blocked` with `px` and posts an audit comment carrying `stuck_state`, `duration_minutes`, and `max_duration_minutes`. It emits nothing: the move becomes `bloodbank.repo.task.updated` and the comment becomes `bloodbank.repo.task.appended`, both from the Plane webhook. The workflow does not retry or escalate. Consumers decide.
 
 **Integration Points:**
 - Plane REST API (ticket CRUD, status transitions, label routing)
-- Bloodbank CLI `bb` / `bb-emit` on PATH (event publishing; there is no publish.sh)
-- Bloodbank schemas at ~/code/33GOD/bloodbank/schemas/bloodbank/ (event contracts); `bb contract` for the legal vocabulary
+- `px` (Pilot >= 0.2.0) on PATH: the one Plane writer; every state move is `px move <ticket> "<lane>" -m "<audit comment>"` on a legacy board
+- Plane webhook → n8n `Plane → Bloodbank`: the only producer of `bloodbank.repo.task.*` facts (no emitter needed here)
 - Plane skill at ~/.claude/skills/managing-tickets-and-tasks-in-plane/
 
 ## Classification Decisions
@@ -83,7 +83,7 @@ Each state has a max duration. If exceeded, the workflow emits a `bloodbank.repo
 - Needs `steps-c/`, `steps-e/`, `steps-v/` directories
 - No continuation logic (step-01b-continue.md not needed)
 - No output document template needed
-- Steps orchestrate external systems (Plane API, Bloodbank events, BMAD agent spawning)
+- Steps orchestrate external systems (Plane via `px`, BMAD agent spawning); Bloodbank facts follow from the Plane webhook
 - Workflow is reentrant: if interrupted, re-read Plane state and resume from current ticket status
 
 ## Requirements
@@ -99,20 +99,19 @@ Each state has a max duration. If exceeded, the workflow emits a `bloodbank.repo
 **User Interaction:**
 - Style: Fully autonomous (zero human intervention)
 - Decision points: None requiring human input. All decisions are rubric-driven or event-driven.
-- Checkpoint frequency: No pauses. Bloodbank events serve as observable checkpoints for external consumers.
+- Checkpoint frequency: No pauses. The Plane webhook's `bloodbank.repo.task.updated` facts serve as observable checkpoints for external consumers.
 
 **Inputs Required:**
-- Required: Ticket ID or Plane board context (workspace + project from `.plane.json`)
+- Required: Ticket ID or Plane board context (ticket_provider.workspace + ticket_provider.board_id from `.project.json`)
 - Required: Plane API access (via existing skill `managing-tickets-and-tasks-in-plane`)
-- Required: Bloodbank CLI access for event publishing (`bb-emit` on PATH)
-- Required: Bloodbank event schemas (`~/code/33GOD/bloodbank/schemas/bloodbank/`)
+- Required: `px` (Pilot >= 0.2.0, for `px move`) on PATH (the one Plane writer)
 - Optional: Trigger mode context (human request, agent delegation, or Bloodbank event)
-- Precondition: `.plane.json` must exist in project root AND reference a workspace registered in `~/.claude/plane-workspaces.json`. If missing or malformed, workflow exits with a clear error (no silent failure).
+- Precondition: `.project.json` must exist in project root and contain a `ticket_provider` block with a non-empty `board_id` AND reference a workspace registered in `~/.claude/plane-workspaces.json`. If missing or malformed, workflow exits with a clear error (no silent failure).
 
 **Output Specifications:**
 - Type: Actions (not a document)
 - Plane ticket state mutations (status transitions through the state machine)
-- Bloodbank events broadcast at key transitions with `project_id` from Plane context. Events are broadcast, not addressed to specific agents. Consumers self-select.
+- Every transition becomes a `bloodbank.repo.task.updated` fact published by the Plane webhook, not by the workflow. Facts are broadcast, not addressed to specific agents. Consumers self-select.
 - Code changes + tests (produced by coding agent, committed to repo)
 - QA verification results: per-AC-item pass/fail verdicts
 - Audit trail: structured Plane comments at each state transition (format TBD during step design)
@@ -139,7 +138,7 @@ If any criterion fails, route to Plane Captain for refinement.
 
 **Staleness Detection:**
 - Each state has a configurable max duration
-- On expiry: `bloodbank.repo.task.updated` with `trigger_source: "ticket-lifecycle-staleness"`, `project_id`, `ticket_id`, `stuck_state`, `duration_minutes`
+- On expiry: move to `blocked` via `px` + audit comment with `stuck_state`, `duration_minutes`, `max_duration_minutes` (the webhook publishes the fact)
 - Workflow does not retry or escalate. Consumers decide.
 
 **Concurrency Model:** (design-time concern)
@@ -151,15 +150,15 @@ If any criterion fails, route to Plane Captain for refinement.
 **Success Criteria:**
 - Ticket reaches `done` state with all AC line items verified (line-item granularity)
 - Full audit trail in Plane (structured comments at each state transition)
-- Bloodbank events fired at handoff points with project context (broadcast, not agent-addressed)
+- Every handoff is a `px` state move; the Plane webhook publishes the fact (the workflow emits nothing)
 - No human intervention required end-to-end
 - Graceful handling of QA failures (max 3 retries, then blocked with full history)
-- Graceful handling of staleness (event emitted, no infinite hangs)
-- Precondition failures (missing `.plane.json`) produce clear errors, not silent failures
+- Graceful handling of staleness (moved to blocked with an audit comment, no infinite hangs)
+- Precondition failures (missing `.project.json` or `ticket_provider` block) produce clear errors, not silent failures
 
 **Instruction Style:**
 - Overall: Mixed
-- Prescriptive for: state transitions, Plane API calls, AC-sufficiency rubric, event schemas, retry caps
+- Prescriptive for: state transitions, Plane API calls, AC-sufficiency rubric, retry caps
 - Intent-based for: agent delegation (coding agent gets goals + AC, not line-by-line instructions), QA verification approach
 - Notes: The workflow orchestrates agents but does not micromanage their internal execution
 
@@ -172,7 +171,7 @@ If any criterion fails, route to Plane Captain for refinement.
 
 **LLM Features:**
 - **Web-Browsing:** Excluded - All data from Plane API + local repo
-- **File I/O:** Included - Reads `.plane.json`, coding agent writes code/tests, reads Bloodbank schemas
+- **File I/O:** Included - Reads `.project.json` (ticket_provider block), coding agent writes code/tests
 - **Sub-Agents:** Included - Core mechanism: spawns Plane Captain, Coding Agent, QA Agent as needed
 - **Sub-Processes:** Excluded - Single ticket per invocation, no parallelism needed
 
@@ -183,8 +182,7 @@ If any criterion fails, route to Plane Captain for refinement.
 
 **External Integrations:**
 - Plane REST API via existing skill (`managing-tickets-and-tasks-in-plane`)
-- Bloodbank CLI (`bb-emit`) for event publishing
-- Bloodbank event schemas (`~/code/33GOD/bloodbank/schemas/bloodbank/`) for event contracts
+- `px` for every Plane state move (ticket facts follow from the Plane webhook; no emitter)
 
 **Installation Requirements:**
 - None. All integrations already installed and available.
@@ -192,7 +190,7 @@ If any criterion fails, route to Plane Captain for refinement.
 **Workflow Structure Preview:**
 
 Phase 1: Context Resolution
-- Resolve project context from `.plane.json` + `~/.claude/plane-workspaces.json`
+- Resolve project context from `.project.json` (ticket_provider block) + `~/.claude/plane-workspaces.json`
 - Validate preconditions (workspace exists, API accessible)
 - Exit with clear error if preconditions fail
 
@@ -209,7 +207,7 @@ Phase 3: AC Refinement (conditional)
 Phase 4: Implementation
 - Spawn Coding Agent with AC items as goals
 - Agent implements code + writes tests covering each AC item
-- On AC ambiguity -> `blocked` + staleness event
+- On AC ambiguity -> `blocked` + audit comment
 - On completion -> transition to `review`
 
 Phase 5: Review Gate
@@ -219,13 +217,13 @@ Phase 5: Review Gate
 Phase 6: QA Verification
 - Spawn QA Agent for line-item AC verification
 - Per-item pass/fail verdicts
-- All pass -> `done` + broadcast `bloodbank.repo.task.updated`
+- All pass -> `done` (the webhook publishes `bloodbank.repo.task.updated`)
 - Any fail (retries < 3) -> back to Phase 4 with defect details
-- Any fail (retries >= 3) -> `blocked` + staleness event
+- Any fail (retries >= 3) -> `blocked` + audit comment
 
 Phase 7: Completion
-- Broadcast `bloodbank.repo.task.updated` with `data.project_id`
 - Post structured audit comment to Plane
+- Emit nothing (the terminal move was already published by the Plane webhook)
 
 ## Workflow Design
 
@@ -239,7 +237,7 @@ Phase 7: Completion
 | 04 | step-04-implement.md | Middle (simple) | Spawn Coding Agent with AC goals | Auto-proceed |
 | 05 | step-05-review.md | Validation sequence | Validate tests pass, coverage maps to AC | Auto-proceed |
 | 06 | step-06-qa.md | Branch + loop | Spawn QA Agent for line-item verification | Auto-branch |
-| 07 | step-07-complete.md | Final | Broadcast event, post audit comment, mark done | None |
+| 07 | step-07-complete.md | Final | Post audit comment, exit (emits nothing) | None |
 
 ### Edit Mode (steps-e/) - 2 Steps
 
@@ -252,13 +250,13 @@ Phase 7: Completion
 
 | Step | File | Goal |
 |------|------|------|
-| 01 | step-01-validate.md | Validate: .plane.json exists, Bloodbank CLI accessible, schemas present, skill installed |
+| 01 | step-01-validate.md | Validate: .project.json ticket_provider block exists, `px` resolves the board, no emit step in steps-c/, skill installed |
 
 ### Data Flow
 
 ```
 step-01-init
-  reads: .plane.json, ~/.claude/plane-workspaces.json
+  reads: .project.json (ticket_provider block), ~/.claude/plane-workspaces.json
   produces: project context (workspace_id, project_id, ticket_id, ticket data)
   -> step-02
 
@@ -294,7 +292,7 @@ step-06-qa
   fail + retries >= 3: -> step-07 (blocked)
 
 step-07-complete
-  broadcasts: bloodbank.repo.task.updated
+  emits: nothing (the Plane webhook published the terminal move)
   posts: structured audit comment to Plane
   end
 ```
@@ -308,7 +306,7 @@ ticket-lifecycle/
 ├── data/
 │   ├── ac-sufficiency-rubric.md   # 4-criteria AC evaluation rubric
 │   ├── audit-comment-template.md  # Structured comment format for Plane
-│   └── event-schemas.md           # Bloodbank event contract + data payloads
+│   └── event-schemas.md           # Bloodbank rule: the workflow emits no ticket events
 ├── steps-c/
 │   ├── step-01-init.md
 │   ├── step-02-triage.md
@@ -334,7 +332,7 @@ Workflow orchestrator. Reads state, evaluates rubrics, spawns agents, transition
 
 ### Subprocess Optimization
 
-- Pattern 1 (Grep/Regex) at step-01-init: search for .plane.json in project tree
+- Pattern 1 (Grep/Regex) at step-01-init: search for .project.json in project tree
 - Pattern 4 (Parallel) deferred to v2: QA could parallelize AC item checks
 
 ### Error Handling
@@ -343,4 +341,4 @@ Workflow orchestrator. Reads state, evaluates rubrics, spawns agents, transition
 - step-02-triage: Rubric is deterministic (4 binary criteria)
 - step-04-implement: AC ambiguity -> blocked state
 - step-06-qa: Max 3 retries, then blocked
-- All steps: Staleness timer, bloodbank.repo.task.updated (trigger_source: ticket-lifecycle-staleness) on timeout
+- All steps: Staleness timer; on timeout move to `blocked` via `px` with an audit comment (no event emitted)

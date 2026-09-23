@@ -1,6 +1,6 @@
 ---
 name: 'step-v-01-validate'
-description: 'Validate all workflow prerequisites: Plane config, Bloodbank CLI, event naming contract, and workflow configuration'
+description: 'Validate all workflow prerequisites: Plane config, px, the no-emit rule, and workflow configuration'
 
 workflowConfig: '../workflow.yaml'
 acRubric: '../data/ac-sufficiency-rubric.md'
@@ -38,14 +38,15 @@ To verify that all external dependencies, configuration files, and tooling requi
 
 ### 1. Validate Plane Configuration
 
-**Check `.plane.json` in project root:**
+**Check `.project.json` in project root:**
 - [ ] File exists
-- [ ] Contains `workspace_slug`
-- [ ] Contains `project_id`
+- [ ] Contains a `ticket_provider` block
+- [ ] `ticket_provider.workspace` is present
+- [ ] `ticket_provider.board_id` is present and non-empty
 
 **Check `~/.claude/plane-workspaces.json`:**
 - [ ] File exists
-- [ ] Contains entry matching the workspace_slug from `.plane.json`
+- [ ] Contains entry matching `ticket_provider.workspace` from `.project.json`
 - [ ] Entry has `api_key` and `base_url`
 
 **Check Plane skill:**
@@ -54,28 +55,26 @@ To verify that all external dependencies, configuration files, and tooling requi
 **Validate Plane API connectivity:**
 - [ ] Attempt a read-only API call (e.g., list states) to confirm credentials work
 
-### 2. Validate Bloodbank CLI
+### 2. Validate the Ticket Writer
 
-**Check Bloodbank installation:**
-- [ ] `bb` is on PATH (`bb contract` prints the naming vocabulary)
-- [ ] `bb-emit` is on PATH (this is the emitter; there is no `publish.sh`)
+**Check px:**
+- [ ] `px` is on PATH
+- [ ] `px whoami --json` resolves this repo's board binding
+- [ ] `px --help` lists `move` (Pilot >= 0.2.0)
+- [ ] Every lane named under `states` in {workflowConfig} exists on the board:
+      `px move <any ticket> "<lane>" --dry-run --json` resolves it
 
-**Check Bloodbank connectivity:**
-- [ ] `bb doctor` reports a usable local scaffold
+### 3. Validate the No-Emit Rule
 
-### 3. Validate the Event Naming Contract
+This workflow publishes no Bloodbank events. Ticket facts
+(`bloodbank.repo.task.*`, `bloodbank.repo.board.*`) come only from the Plane
+webhook normalizer (n8n `Plane → Bloodbank`), which turns every state move into
+`bloodbank.repo.task.updated`.
 
-The contract is discoverable. Do not read allowlists out of source files, and do
-not accept a type that has not been checked.
-
-**Verify the type this workflow publishes is legal:**
-- [ ] `bb emit --check --type bloodbank.repo.task.updated` exits 0 and prints PASS
-- [ ] The registered schema exists at
-      `~/code/33GOD/bloodbank/schemas/bloodbank/repo/task.updated.json`
-
-**Verify no illegal literal survives in the workflow:**
-- [ ] No step file contains a `"version"` envelope field
-- [ ] No step file names a type outside `bloodbank.<domain>.<entity>.<action>`
+**Verify no emit step survives in the workflow:**
+- [ ] No step file tells the orchestrator to broadcast, publish, or `bb emit` a
+      `repo.task.*` or `repo.board.*` type
+- [ ] Every state move in steps-c/ is a `px move` followed by "Emit nothing"
 
 ### 4. Validate Workflow Configuration
 
@@ -84,7 +83,7 @@ not accept a type that has not been checked.
 - [ ] `ac_rubric` section present with all 4 criteria
 - [ ] `qa.max_retries` defined (numeric, > 0)
 - [ ] `staleness` section with durations for: triage, refining, in_progress, review, qa
-- [ ] `plane_states` mapping present
+- [ ] `states` mapping present
 
 **Check {acRubric}:**
 - [ ] File exists
@@ -92,9 +91,9 @@ not accept a type that has not been checked.
 
 **Check {eventSchemas}:**
 - [ ] File exists
-- [ ] Documents the `bloodbank.repo.task.updated` state-transition payload
-- [ ] Documents the `bloodbank.repo.task.updated` staleness-report payload
-- [ ] Every type literal in it passes `bb emit --check --type <literal>`
+- [ ] States that the workflow emits no ticket events and names the Plane
+      webhook as the only producer of `bloodbank.repo.task.*`
+- [ ] Documents staleness as a move to `blocked` plus an audit comment, not an event
 
 ### 5. Present Validation Report
 
@@ -105,23 +104,24 @@ TICKET-LIFECYCLE PREREQUISITE VALIDATION
 ========================================
 
 Plane Configuration:
-  .plane.json ................ [PASS/FAIL]
+  .project.json (ticket_provider) [PASS/FAIL]
   plane-workspaces.json ...... [PASS/FAIL]
   Plane skill ................ [PASS/FAIL]
   Plane API connectivity ..... [PASS/FAIL]
 
-Bloodbank:
-  CLI installation ........... [PASS/FAIL]
-  bb doctor .................. [PASS/FAIL]
+Ticket Writer:
+  px on PATH ................. [PASS/FAIL]
+  px whoami .................. [PASS/FAIL]
+  px move available .......... [PASS/FAIL]
+  states lanes on board ...... [PASS/FAIL]
 
-Event Naming Contract:
-  bb emit --check ............ [PASS/FAIL]
-  Registered schema present .. [PASS/FAIL]
+No-Emit Rule:
+  no emit step in steps-c/ ... [PASS/FAIL]
 
 Workflow Configuration:
   workflow.yaml .............. [PASS/FAIL]
   AC sufficiency rubric ...... [PASS/FAIL]
-  Event schema docs .......... [PASS/FAIL]
+  Bloodbank rule doc ......... [PASS/FAIL]
 
 Overall: [ALL CHECKS PASSED / X of Y FAILED]
 ```
@@ -143,7 +143,7 @@ For each failure, provide:
 
 ### SUCCESS:
 
-- All prerequisite categories checked (Plane, Bloodbank, event contract, Config)
+- All prerequisite categories checked (Plane, px, no-emit rule, Config)
 - Every check item evaluated even if others fail
 - Clear pass/fail report with remediation steps for failures
 - No files or state modified during validation

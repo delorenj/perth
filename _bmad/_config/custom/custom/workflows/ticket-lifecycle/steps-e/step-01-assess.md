@@ -55,10 +55,10 @@ Read {workflowConfig} and present all configurable values:
 **Plane State Mapping:**
 - Present current state name mappings
 
-**Event Configuration:**
-- Load {eventSchemas} and summarize the event type it publishes
-- State that the type is fixed by the Bloodbank naming contract: it can only be
-  changed to another name that `bb emit --check --type <name>` accepts
+**Bloodbank (not configurable):**
+- Load {eventSchemas} and state the rule: this workflow emits no ticket events.
+  The Plane webhook publishes `bloodbank.repo.task.updated` for every move it
+  writes through `px`, so there is nothing here to configure
 
 ### 2. Present Modification Options
 
@@ -69,8 +69,7 @@ Configurable areas:
 2. **QA Retry Limit** - Change max retry count
 3. **Staleness Durations** - Adjust per-state timeout thresholds
 4. **State Mapping** - Change Plane status names
-5. **Event Schemas** - Modify Bloodbank event `data` payloads (the type name is contract-bound)
-6. **Audit Comment Format** - Change comment template structure
+5. **Audit Comment Format** - Change comment template structure (this is where transition and staleness detail lives)
 
 Tell me which area(s) you want to modify and what changes you need."
 

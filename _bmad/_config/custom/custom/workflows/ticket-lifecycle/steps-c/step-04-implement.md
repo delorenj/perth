@@ -61,7 +61,7 @@ Assemble the delegation payload:
 
 ### 2. Update Ticket Status
 
-Post audit comment using {auditCommentTemplate}:
+Audit comment ({auditCommentTemplate}); the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -73,8 +73,8 @@ reason: Implementation starting. Coding agent spawned.
 ---
 ```
 
-Update ticket status to in_progress.
-Broadcast `bloodbank.repo.task.updated` with `phase: "in_progress"` (see {eventSchemas}).
+Move the ticket to in_progress and post that comment with it: `px move {ticket_id} "{states.in_progress}" -m "<audit comment>" --json`.
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for this move (see {eventSchemas}).
 
 ### 3. Spawn Coding Agent Sub-Agent
 
@@ -107,7 +107,7 @@ Immediately load, read entire file, then execute {nextStepFile}.
 
 **IF AC ambiguity discovered:**
 
-Post audit comment:
+Audit comment; the move below posts it:
 ```
 [TICKET-LIFECYCLE] State Transition
 ---
@@ -121,8 +121,8 @@ details:
 ---
 ```
 
-Update ticket status to blocked.
-Broadcast `bloodbank.repo.task.updated` with `trigger_source: "ticket-lifecycle-staleness"` and `phase: "blocked"` (see {eventSchemas}). There is no separate staleness type.
+Move the ticket to blocked and post that comment with it: `px move {ticket_id} "{states.blocked}" -m "<audit comment>" --json`.
+Emit nothing: the Plane webhook publishes `bloodbank.repo.task.updated` for the move to blocked, and the audit comment above carries the reason (see {eventSchemas}).
 Load {blockedStepFile} to complete with blocked status.
 
 ---
@@ -136,7 +136,7 @@ Load {blockedStepFile} to complete with blocked status.
 - On success, transitioned to review gate
 - On AC ambiguity, transitioned to blocked with details
 - Audit comments posted at each transition
-- Bloodbank events broadcast
+- No `repo.task.*` event emitted by the workflow (the Plane webhook publishes each move)
 
 ### FAILURE:
 
